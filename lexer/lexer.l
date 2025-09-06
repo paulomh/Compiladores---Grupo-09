@@ -50,4 +50,5 @@
 [ \t\n]+        { /* Ignorar espaços em branco */ }
 . { printf("Caractere invalido: %s\n", yytext); }
 %%
+
 int yywrap() { return 1; }
