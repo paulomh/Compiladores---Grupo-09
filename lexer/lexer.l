@@ -1,4 +1,6 @@
 %
+#include <stdio.h>
+#include <stdlib.h>
 #include "parser.tab.h"
 %
 
@@ -35,6 +37,7 @@
 "%="            { return MODBY; }
 "**"            { return EXPONENTIAL; }
 "//"            { return INTDIVIDE; }
+
 "!"             { return DIFFERENT; }
 "="             { return ASSIGNMENT; }
 "+"             { return PLUS; }
