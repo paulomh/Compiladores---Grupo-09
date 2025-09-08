@@ -1,8 +1,8 @@
-%
+%{
 #include <stdio.h>
 #include <stdlib.h>
 #include "parser.tab.h"
-%
+%}
 
 %%
 [#].*[\n]            { /* Ignorar comentarios */ }
@@ -11,7 +11,7 @@
 [-\+]?[0-9]+ { yylval.intValue = atoi(yytext); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
 [a-zA-Z_][a-zA-Z0-9_]* { yylval.strValue = strdup(yytext); return IDENTIFIER; }
-("[^"]*"|'[^']*') { yylval.strValue = strdup(yytext); return STRING; }
+\"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
 
 "if"            { return IF; }
 "else"          { return ELSE; }
