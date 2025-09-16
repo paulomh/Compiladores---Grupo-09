@@ -50,7 +50,9 @@
 "("             { return LPAREN; }
 ")"             { return RPAREN; }
 ":"             { return COLON; }
-[ \t\n]+        { /* Ignorar espaços em branco */ }
+";"             { return SEMICOLON; }
+[ \t]+          { /* Ignorar espaços e tabs */ }
+\n              { /* Ignorar quebras de linha */ }
 . { printf("Caractere invalido: %s\n", yytext); }
 %%
 

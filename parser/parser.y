@@ -31,10 +31,11 @@ void print_result(int value) {
 %token EQUALS DIFFROM GTOREQUAL LSOREQUAL INCREMENT DECREMENT INCTIMES DIVBY MODBY EXPONENTIAL INTDIVIDE
 
 // Operadores simples sem valor semântico 
-%token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN COLON
+%token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN COLON SEMICOLON
 
 // Declaração de tipos para regras gramaticais
 %type <intValue> expr
+%type <intValue> stmt
 
 // Precedência dos operadores (menor para maior)
 %left OR
@@ -48,18 +49,17 @@ void print_result(int value) {
 
 %%
 
-// Regra inicial do programa
+// Regras de alto nível: programa composto por múltiplos statements terminados por ';'
 program:
-    expr
-    {
-        print_result($1);
-        printf("Programa analisado com sucesso!\n");
-    }
-    | /* vazio - aceita entrada vazia */
-    {
-        printf("Entrada vazia - programa válido\n");
-    }
-;
+    /* vazio */
+  | program stmt
+  ;
+
+// Cada statement deve terminar com ponto e vírgula
+stmt:
+    expr SEMICOLON { print_result($1); }
+  | error SEMICOLON { yyerrok; }
+  ;
 
 // Expressões aritméticas e lógicas
 expr:
