@@ -1,7 +1,55 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "parser.tab.h"
+#define MAX 100
+
+typedef struct stack 
+{
+    int indent[MAX];
+    int indent_top;
+} stack;
+
+stack *stack_init()
+{
+    stack *s = malloc(sizeof(stack));
+    s->indent[0] = 0;
+    s->indent_top = 0;
+
+    return s;
+}
+
+int is_empty(stack *s)
+{
+    return s->indent_top == 0;
+}
+
+int is_full(stack *s)
+{
+    return s->indent_top == MAX - 1;
+}
+
+void stack_push(stack *s, int level)
+{
+    if(is_full(s))
+        return;
+    s->indent[++(s->indent_top)] = level;
+}
+
+int stack_pop(stack *s)
+{
+    if(is_empty(s))
+        return -1;
+    return s->indent[(s->indent_top)--];
+}
+
+int stack_peek(stack *s)
+{
+    return s->indent[s->indent_top];
+}
+
+
 %}
 
 %%
