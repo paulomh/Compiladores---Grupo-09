@@ -61,19 +61,28 @@ stack *s;
 int dedent_line = 0;
 int eof_flag = 0;
 
+int yylex(void) {
+    if (dedent_line > 0) {
+        dedent_line--;
+        printf("[LEXER] -> DEDENT\n");
+        return DEDENT;
+    }
+    
+    return lex_engine(); 
+}
+
 %}
 
 %%
 [#].*[\n]            { /* Ignorar comentarios */ }
 ('''(.|[\n])*'''|"""(.|[\n])*""")   { /* Ignorar comentarios */ }
 
-[-\+]?[0-9]+ { yylval.intValue = atoi(yytext); return INT; }
+[-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
-[a-zA-Z_][a-zA-Z0-9_]* { yylval.strValue = strdup(yytext); return IDENTIFIER; }
 \"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
 
-"if"            { return IF; }
-"else"          { return ELSE; }
+"if"            {  printf("[LEXER] -> IF\n "); return IF; }
+"else"          {  printf("[LEXER] -> ELSE\n "); return ELSE; }
 "while"         { return WHILE; }
 "for"           { return FOR; }
 "and"           { return AND; }
@@ -84,6 +93,8 @@ int eof_flag = 0;
 "pass"          { return PASS; }
 "def"           { return DEF; }
 "return"        { return RETDEF; }
+
+[a-zA-Z_][a-zA-Z0-9_]* { yylval.strValue = strdup(yytext); return IDENTIFIER; }
 
 "=="            { return EQUALS; }
 "!="            { return DIFFROM; }
@@ -97,19 +108,18 @@ int eof_flag = 0;
 "**"            { return EXPONENTIAL; }
 "//"            { return INTDIVIDE; }
 
-"!"             { return DIFFERENT; }
-"="             { return ASSIGNMENT; }
-"+"             { return PLUS; }
-"-"             { return MINUS; }
-"*"             { return TIMES; }
-"/"             { return DIVIDE; }
-"%"             { return MODULE; }
-">"             { return GREATER; }
-"<"             { return LESS; }
-"("             { return LPAREN; }
-")"             { return RPAREN; }
-":"             { return COLON; }
-";"             { return SEMICOLON; }
+"!"             {  printf("[LEXER] -> DIFFERENT\n");  return DIFFERENT; }
+"="             {  printf("[LEXER] -> ASSIGNMENT\n"); return ASSIGNMENT; }
+"+"             {  printf("[LEXER] -> PLUS\n");  return PLUS; }
+"-"             {  printf("[LEXER] -> MINUS\n");  return MINUS; }
+"*"             {  printf("[LEXER] -> TIMES\n");  return TIMES; }
+"/"             {  printf("[LEXER] -> DIVIDE\n");  return DIVIDE; }
+"%"             {  printf("[LEXER] -> MODULE\n");  return MODULE; }
+">"             {  printf("[LEXER] -> GREATER\n");  return GREATER; }
+"<"             {  printf("[LEXER] -> LESS\n");  return LESS; }
+"("             {  printf("[LEXER] -> LPAREN\n");  return LPAREN; }
+")"             {  printf("[LEXER] -> RPAREN\n");  return RPAREN; }
+":"             {  printf("[LEXER] -> COLON\n");  return COLON; }
 
 <INDENT_STATE>[ \t]+ {
     int actual_level = strlen(yytext);
