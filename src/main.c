@@ -8,10 +8,11 @@ extern void init_compiler();
 
 int main(int argc, char* argv[]) {
     printf("=== Compilador - Grupo 09 ===\n");
-    printf("Analisador de Expressões Aritméticas\n\n");
+    //printf("Analisador de Expressões Aritméticas\n\n");
     
     // Inicializar compilador
-    init_compiler();
+    //init_compiler();
+    //yyparse();
     
     if (argc > 1) {
         // Abrir arquivo de entrada se fornecido
@@ -24,6 +25,7 @@ int main(int argc, char* argv[]) {
     }
     
     // Executar análise sintática
+    init_compiler();
     int result = yyparse();
     
     if (result == 0) {
@@ -31,6 +33,7 @@ int main(int argc, char* argv[]) {
     } else {
         printf("\nErro na análise sintática!\n");
     }
+
     
     if (yyin != stdin) {
         fclose(yyin);
