@@ -3,6 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct stack {
+    int indent[100];
+    int indent_top;
+} stack;
+
+extern stack *s;
+
+extern stack *stack_init();
+
 int yylex(void);
 void yyerror(const char *s);
 
@@ -33,6 +42,9 @@ void print_result(int value) {
 // Operadores simples sem valor semântico 
 %token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN COLON SEMICOLON
 
+// Indentação
+%token INDENT DEDENT NEWLINE
+
 // Declaração de tipos para regras gramaticais
 %type <intValue> expr
 %type <intValue> stmt
@@ -53,6 +65,7 @@ void print_result(int value) {
 program:
     /* vazio */
   | program stmt
+  | statement_list { printf("\n[SUCESSO!]"); }
   ;
 
 // Cada statement deve terminar com ponto e vírgula
@@ -60,6 +73,34 @@ stmt:
     expr SEMICOLON { print_result($1); }
   | error SEMICOLON { yyerrok; }
   ;
+
+statement_list:
+    statement
+    | statement_list statement
+    ;
+statement:
+    simple_statement NEWLINE
+    | compound_statement
+    ;
+
+simple_statement:
+    expr { print_result($1); }
+    ;
+
+compound_statement:
+    if_statement
+    ;
+
+// Um "bloco" de código indentado
+suite:
+    NEWLINE INDENT statement_list DEDENT
+    ;
+
+// A nova regra 'if', mais limpa
+if_statement:
+    IF expr COLON suite
+    | IF expr COLON suite ELSE COLON suite
+    ;
 
 // Expressões aritméticas e lógicas
 expr:
@@ -96,6 +137,7 @@ void yyerror(const char *s) {
 
 // Função de inicialização
 void init_compiler() {
+    s = stack_init();
     printf("=== Analisador Sintático do Compilador ===\n");
     printf("Digite uma expressão aritmética (Ctrl+D para sair):\n\n");
 }
