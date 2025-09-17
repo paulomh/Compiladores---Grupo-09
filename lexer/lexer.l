@@ -1,9 +1,17 @@
+%x INDENT_STATE
 %{
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "parser.tab.h"
 #define MAX 100
+#undef YY_DECL
+#define YY_DECL int lex_engine(void)
+
+int lex_engine(void);
+void yyerror(const char *s);
+int yylex(void);
+
 
 typedef struct stack 
 {
@@ -49,6 +57,9 @@ int stack_peek(stack *s)
     return s->indent[s->indent_top];
 }
 
+stack *s;
+int dedent_line = 0;
+int eof_flag = 0;
 
 %}
 
@@ -99,8 +110,70 @@ int stack_peek(stack *s)
 ")"             { return RPAREN; }
 ":"             { return COLON; }
 ";"             { return SEMICOLON; }
-[ \t]+          { /* Ignorar espaços e tabs */ }
-\n              { /* Ignorar quebras de linha */ }
+
+<INDENT_STATE>[ \t]+ {
+    int actual_level = strlen(yytext);
+    int previous_level = stack_peek(s);
+
+    if (actual_level > previous_level) {
+        stack_push(s, actual_level);
+        printf("[LEXER] -> INDENT\n");
+        BEGIN(INITIAL);
+        return INDENT;
+    } else {
+        BEGIN(INITIAL);
+        if (actual_level < previous_level) {
+            while (stack_peek(s) > actual_level) {
+                stack_pop(s);
+                dedent_line++;
+            }
+            if (stack_peek(s) != actual_level) {
+                yyerror("IndentationError");
+                exit(1);
+            }
+        }
+
+        yyless(0); 
+        return yylex();
+    }
+}
+
+<INDENT_STATE>. {    
+    yyless(0);
+    
+    while (stack_peek(s) > 0) {
+        stack_pop(s);
+        dedent_line++;
+    }
+    
+    BEGIN(INITIAL);
+
+    return yylex();
+}
+
+<INDENT_STATE>\n {
+    BEGIN(INDENT_STATE);
+    printf("[LEXER] -> NEWLINE (linha em branco)\n");
+    return NEWLINE;
+}
+
+\n { BEGIN(INDENT_STATE); printf("[LEXER] -> NEWLINE\n"); return NEWLINE; }
+[ \t\r]+        { /* Ignorar espaços em branco */ }
+
+<<EOF>> {
+    if (eof_flag) {
+        return 0;
+    }
+
+    eof_flag = 1;
+    while (stack_peek(s) > 0) {
+        stack_pop(s);
+        dedent_line++;
+    }
+
+    return yylex();
+}
+
 . { printf("Caractere invalido: %s\n", yytext); }
 %%
 
