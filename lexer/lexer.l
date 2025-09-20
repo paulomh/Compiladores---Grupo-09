@@ -76,7 +76,7 @@ int yylex(void) {
 
 %%
 [#].*[\n]            { /* Ignorar comentarios */ }
-('''(.|[\n])*'''|"""(.|[\n])*""")   { /* Ignorar comentários */ }
+('''(.|\n)*'''|\"\"\"(.|\n)*\"\"\")  { /* Ignorar comentários */ }
 
 [-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
@@ -121,6 +121,7 @@ int yylex(void) {
 "("             {  printf("[LEXER] -> LPAREN\n");  return LPAREN; }
 ")"             {  printf("[LEXER] -> RPAREN\n");  return RPAREN; }
 ":"             {  printf("[LEXER] -> COLON\n");  return COLON; }
+","             {  printf("[LEXER] -> COMMA\n");  return COMMA; }
 
 <INDENT_STATE>[ \t]+ {
     int actual_level = strlen(yytext);
