@@ -45,6 +45,8 @@ void print_result(int value) {
 // Indentação
 %token INDENT DEDENT NEWLINE
 
+%token COMMA
+
 // Declaração de tipos para regras gramaticais
 %type <intValue> expr
 %type <intValue> stmt
@@ -71,6 +73,10 @@ program:
 // Cada statement deve terminar com ponto e vírgula
 stmt:
     expr SEMICOLON { print_result($1); }
+  | RETDEF expr SEMICOLON {
+        printf("Retorno da função: %d\n", $2);
+        $$ = $2; // Retorna o valor da expressão
+    }
   | error SEMICOLON { yyerrok; }
   ;
 
@@ -81,6 +87,7 @@ statement_list:
 statement:
     simple_statement NEWLINE
     | compound_statement
+    | function_definition
     ;
 
 simple_statement:
@@ -89,18 +96,18 @@ simple_statement:
 
 compound_statement:
     if_statement
-   ;
+ ;
 
 // Um "bloco" de código indentado
 suite:
     NEWLINE INDENT statement_list DEDENT
-   ;
+    ;
 
-// A nova regra 'if', mais limpa
+# A nova regra 'if', mais limpa
 if_statement:
     IF expr COLON suite
     | IF expr COLON suite ELSE COLON suite
-   ;
+ ;
 
 // Expressões aritméticas e lógicas
 expr:
@@ -125,8 +132,51 @@ expr:
   | FLOAT             { $$ = (int)$1; }
   | IDENTIFIER        { $$ = 0; } // Placeholder para variáveis
   | MINUS expr %prec UMINUS { $$ = -$2; }
+  | IDENTIFIER LPAREN argument_list RPAREN {
+        printf("Chamada de função: %s\n", $1);
+        free($1); // Libera a memória alocada para o IDENTIFIER
+        $$ = 0;   // Placeholder para o valor retornado
+    }
   ;
 
+argument_list:
+    /* vazio */ {
+        printf("Sem argumentos\n");
+        $$ = 0; // Retorna 0 como valor padrão
+    }
+  | expr {
+        printf("Um argumento\n");
+        $$ = 1; // Retorna 1 para indicar um argumento
+    }
+  | argument_list COMMA expr {
+        printf("Mais argumentos\n");
+        $$ = $1 + 1; // Incrementa o contador de argumentos
+    }
+  ;
+
+function_definition:
+    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite {
+        printf("Definição de função: %s com %d parâmetro(s)\n", $2, $4);
+        free($2); // Libera a memória alocada para o IDENTIFIER
+    }
+    ;
+
+parameter_list:
+    /* vazio */ {
+        printf("Sem parâmetros\n");
+        $$ = 0; // Retorna 0 como valor padrão
+    }
+  | IDENTIFIER {
+        printf("Um parâmetro: %s\n", $1);
+        free($1); // Libera a memória alocada para o IDENTIFIER
+        $$ = 1; // Retorna 1 para indicar um parâmetro
+    }
+  | parameter_list COMMA IDENTIFIER {
+        printf("Mais parâmetros: %s\n", $3);
+        free($3); // Libera a memória alocada para o IDENTIFIER
+        $$ = $1 + 1; // Incrementa o contador de parâmetros
+    }
+  ;
 
 %%
 
