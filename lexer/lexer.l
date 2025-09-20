@@ -60,6 +60,7 @@ int stack_peek(stack *s)
 stack *s;
 int dedent_line = 0;
 int eof_flag = 0;
+int newline_count = 0; // Contador global de "enters"
 
 int yylex(void) {
     if (dedent_line > 0) {
@@ -75,7 +76,7 @@ int yylex(void) {
 
 %%
 [#].*[\n]            { /* Ignorar comentarios */ }
-('''(.|[\n])*'''|"""(.|[\n])*""")   { /* Ignorar comentarios */ }
+('''(.|[\n])*'''|"""(.|[\n])*""")   { /* Ignorar comentários */ }
 
 [-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
@@ -163,11 +164,16 @@ int yylex(void) {
 
 <INDENT_STATE>\n {
     BEGIN(INDENT_STATE);
-    printf("[LEXER] -> NEWLINE (linha em branco)\n");
+    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count); 
     return NEWLINE;
 }
 
-\n { BEGIN(INDENT_STATE); printf("[LEXER] -> NEWLINE\n"); return NEWLINE; }
+\n { 
+    newline_count++; // Incrementa o contador de "enters"
+    BEGIN(INDENT_STATE); 
+    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count); 
+    return NEWLINE; 
+}
 [ \t\r]+        { /* Ignorar espaços em branco */ }
 
 <<EOF>> {

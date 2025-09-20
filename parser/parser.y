@@ -66,7 +66,7 @@ program:
     /* vazio */
   | program stmt
   | statement_list { printf("\n[SUCESSO!]"); }
-  ;
+ ;
 
 // Cada statement deve terminar com ponto e vírgula
 stmt:
@@ -89,18 +89,18 @@ simple_statement:
 
 compound_statement:
     if_statement
-    ;
+   ;
 
 // Um "bloco" de código indentado
 suite:
     NEWLINE INDENT statement_list DEDENT
-    ;
+   ;
 
 // A nova regra 'if', mais limpa
 if_statement:
     IF expr COLON suite
     | IF expr COLON suite ELSE COLON suite
-    ;
+   ;
 
 // Expressões aritméticas e lógicas
 expr:
@@ -140,4 +140,11 @@ void init_compiler() {
     s = stack_init();
     printf("=== Analisador Sintático do Compilador ===\n");
     printf("Digite uma expressão aritmética (Ctrl+D para sair):\n\n");
+}
+
+int main() {
+    init_compiler();
+    yyparse();
+    printf("\nTotal de linhas (NEWLINE): %d\n", newline_count); // Exibe o total de "enters"
+    return 0;
 }
