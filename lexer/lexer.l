@@ -75,8 +75,8 @@ int yylex(void) {
 %}
 
 %%
-[#].*[\n]            { /* Ignorar comentarios */ }
-('''(.|\n)*'''|\"\"\"(.|\n)*\"\"\")  { /* Ignorar comentários */ }
+#.*\n           { BEGIN(INDENT_STATE); printf("COMENTARIO SIMPLES\n"); /* Ignorar comentarios */ }
+('''(.|\n)*'''|\"\"\"(.|\n)*\"\"\")   { BEGIN(INDENT_STATE); printf("COMENTARIO COMPOSTO\n"); /* Ignorar comentarios */ }
 
 [-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
