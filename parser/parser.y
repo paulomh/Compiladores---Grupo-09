@@ -40,12 +40,10 @@ void print_result(int value) {
 %token EQUALS DIFFROM GTOREQUAL LSOREQUAL INCREMENT DECREMENT INCTIMES DIVBY MODBY EXPONENTIAL INTDIVIDE
 
 // Operadores simples sem valor semântico 
-%token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN COLON SEMICOLON
+%token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN COLON SEMICOLON COMMA
 
 // Indentação
 %token INDENT DEDENT NEWLINE
-
-%token COMMA
 
 // Declaração de tipos para regras gramaticais
 %type <intValue> expr
@@ -63,22 +61,10 @@ void print_result(int value) {
 
 %%
 
-// Regras de alto nível: programa composto por múltiplos statements terminados por ';'
 program:
     /* vazio */
-  | program stmt
   | statement_list { printf("\n[SUCESSO!]"); }
  ;
-
-// Cada statement deve terminar com ponto e vírgula
-stmt:
-    expr SEMICOLON { print_result($1); }
-  | RETDEF expr SEMICOLON {
-        printf("Retorno da função: %d\n", $2);
-        $$ = $2; // Retorna o valor da expressão
-    }
-  | error SEMICOLON { yyerrok; }
-  ;
 
 statement_list:
     statement
@@ -103,7 +89,6 @@ suite:
     NEWLINE INDENT statement_list DEDENT
     ;
 
-# A nova regra 'if', mais limpa
 if_statement:
     IF expr COLON suite
     | IF expr COLON suite ELSE COLON suite
