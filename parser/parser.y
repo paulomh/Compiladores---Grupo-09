@@ -63,17 +63,18 @@ void print_result(int value) {
 
 program:
     /* vazio */
-  | statement_list { printf("\n[SUCESSO!]"); }
- ;
+    | statement_list { printf("\n[SUCESSO!]"); }
+    ;
 
 statement_list:
     statement
     | statement_list statement
     ;
+
 statement:
-    simple_statement NEWLINE
+    NEWLINE
+    | simple_statement NEWLINE
     | compound_statement
-    | function_definition
     ;
 
 simple_statement:
@@ -82,7 +83,7 @@ simple_statement:
 
 compound_statement:
     if_statement
- ;
+    ;
 
 // Um "bloco" de código indentado
 suite:
@@ -93,6 +94,37 @@ if_statement:
     IF expr COLON suite
     | IF expr COLON suite ELSE COLON suite
  ;
+
+argument_list:
+    /* vazio */ {
+        printf("Sem argumentos\n");
+        $$ = 0; // Retorna 0 como valor padrão
+    }
+  | expr {
+        printf("Um argumento\n");
+        $$ = 1; // Retorna 1 para indicar um argumento
+    }
+  | argument_list COMMA expr {
+        printf("Mais argumentos\n");
+        $$ = $1 + 1; // Incrementa o contador de argumentos
+    }
+  ;
+
+function_definition:
+    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite {
+        printf("Definição de função: %s com %d parâmetro(s)\n", $2, $4);
+    }
+    ;
+
+parameter_list:
+
+    | parameter
+    | parameter_list COMMA parameter
+
+parameter:
+    IDENTIFIER
+    | IDENTIFIER ASSIGNMENT expr
+    ;
 
 // Expressões aritméticas e lógicas
 expr:
@@ -121,45 +153,6 @@ expr:
         printf("Chamada de função: %s\n", $1);
         free($1); // Libera a memória alocada para o IDENTIFIER
         $$ = 0;   // Placeholder para o valor retornado
-    }
-  ;
-
-argument_list:
-    /* vazio */ {
-        printf("Sem argumentos\n");
-        $$ = 0; // Retorna 0 como valor padrão
-    }
-  | expr {
-        printf("Um argumento\n");
-        $$ = 1; // Retorna 1 para indicar um argumento
-    }
-  | argument_list COMMA expr {
-        printf("Mais argumentos\n");
-        $$ = $1 + 1; // Incrementa o contador de argumentos
-    }
-  ;
-
-function_definition:
-    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite {
-        printf("Definição de função: %s com %d parâmetro(s)\n", $2, $4);
-        free($2); // Libera a memória alocada para o IDENTIFIER
-    }
-    ;
-
-parameter_list:
-    /* vazio */ {
-        printf("Sem parâmetros\n");
-        $$ = 0; // Retorna 0 como valor padrão
-    }
-  | IDENTIFIER {
-        printf("Um parâmetro: %s\n", $1);
-        free($1); // Libera a memória alocada para o IDENTIFIER
-        $$ = 1; // Retorna 1 para indicar um parâmetro
-    }
-  | parameter_list COMMA IDENTIFIER {
-        printf("Mais parâmetros: %s\n", $3);
-        free($3); // Libera a memória alocada para o IDENTIFIER
-        $$ = $1 + 1; // Incrementa o contador de parâmetros
     }
   ;
 
