@@ -93,31 +93,14 @@ suite:
 if_statement:
     IF expr COLON suite
     | IF expr COLON suite ELSE COLON suite
- ;
-
-argument_list:
-    /* vazio */ {
-        printf("Sem argumentos\n");
-        $$ = 0; // Retorna 0 como valor padrão
-    }
-  | expr {
-        printf("Um argumento\n");
-        $$ = 1; // Retorna 1 para indicar um argumento
-    }
-  | argument_list COMMA expr {
-        printf("Mais argumentos\n");
-        $$ = $1 + 1; // Incrementa o contador de argumentos
-    }
-  ;
+    ;
 
 function_definition:
-    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite {
-        printf("Definição de função: %s com %d parâmetro(s)\n", $2, $4);
-    }
+    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite
     ;
 
 parameter_list:
-
+    /* vazio */
     | parameter
     | parameter_list COMMA parameter
 
@@ -125,6 +108,22 @@ parameter:
     IDENTIFIER
     | IDENTIFIER ASSIGNMENT expr
     ;
+
+return_statement:
+    RETDEF
+    | RETDEF expr
+    ;
+
+function_call:
+    IDENTIFIER LPAREN argument_list RPAREN
+    ;
+
+argument_list:
+    
+    | expr
+    | argument_list COMMA expr
+    ;
+
 
 // Expressões aritméticas e lógicas
 expr:
@@ -149,11 +148,7 @@ expr:
   | FLOAT             { $$ = (int)$1; }
   | IDENTIFIER        { $$ = 0; } // Placeholder para variáveis
   | MINUS expr %prec UMINUS { $$ = -$2; }
-  | IDENTIFIER LPAREN argument_list RPAREN {
-        printf("Chamada de função: %s\n", $1);
-        free($1); // Libera a memória alocada para o IDENTIFIER
-        $$ = 0;   // Placeholder para o valor retornado
-    }
+  | function_call
   ;
 
 %%
