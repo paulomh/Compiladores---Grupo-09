@@ -88,6 +88,7 @@ assignment_statement:
 
 compound_statement:
     if_statement
+    | function_definition
     ;
 
 // Um "bloco" de código indentado
