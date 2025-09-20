@@ -191,10 +191,3 @@ void init_compiler() {
     printf("=== Analisador Sintático do Compilador ===\n");
     printf("Digite uma expressão aritmética (Ctrl+D para sair):\n\n");
 }
-
-int main() {
-    init_compiler();
-    yyparse();
-    printf("\nTotal de linhas (NEWLINE): %d\n", newline_count); // Exibe o total de "enters"
-    return 0;
-}
