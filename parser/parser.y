@@ -47,7 +47,6 @@ void print_result(int value) {
 
 // Declaração de tipos para regras gramaticais
 %type <intValue> expr
-%type <intValue> stmt
 
 // Precedência dos operadores (menor para maior)
 %left OR
@@ -79,6 +78,12 @@ statement:
 
 simple_statement:
     expr { print_result($1); }
+    | return_statement
+    | assignment_statement
+    ;
+
+assignment_statement:
+    IDENTIFIER ASSIGNMENT expr
     ;
 
 compound_statement:
@@ -103,6 +108,7 @@ parameter_list:
     /* vazio */
     | parameter
     | parameter_list COMMA parameter
+    ;
 
 parameter:
     IDENTIFIER
