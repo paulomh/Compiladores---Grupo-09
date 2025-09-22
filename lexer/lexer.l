@@ -59,7 +59,7 @@ int stack_peek(stack *s)
 
 stack *s;
 int dedent_line = 0;
-int eof_flag = 0;
+int eof_flag = 0, endF = 0;
 int newline_count = 0; // Contador global de "enters"
 
 int yylex(void) {
@@ -75,8 +75,9 @@ int yylex(void) {
 %}
 
 %%
-#.*\n           { BEGIN(INDENT_STATE); printf("COMENTARIO SIMPLES\n"); /* Ignorar comentarios */ }
-('''(.|\n)*'''|\"\"\"(.|\n)*\"\"\")   { BEGIN(INDENT_STATE); printf("COMENTARIO COMPOSTO\n"); /* Ignorar comentarios */ }
+#[^\n]*           { printf("COMENTARIO SIMPLES\n"); /* Ignorar comentarios */ }
+\"\"\"([^"]|\n)*\"\"\"   { printf("COMENTARIO COMPOSTO\n");}
+'''([^']|\n)*'''   { printf("COMENTARIO COMPOSTO\n");}
 
 [-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
@@ -123,51 +124,7 @@ int yylex(void) {
 ":"             {  printf("[LEXER] -> COLON\n");  return COLON; }
 ","             {  printf("[LEXER] -> COMMA\n");  return COMMA; }
 
-<INDENT_STATE>[ \t]+ {
-    int actual_level = strlen(yytext);
-    int previous_level = stack_peek(s);
-
-    if (actual_level > previous_level) {
-        stack_push(s, actual_level);
-        printf("[LEXER] -> INDENT\n");
-        BEGIN(INITIAL);
-        return INDENT;
-    } else {
-        BEGIN(INITIAL);
-        if (actual_level < previous_level) {
-            while (stack_peek(s) > actual_level) {
-                stack_pop(s);
-                dedent_line++;
-            }
-            if (stack_peek(s) != actual_level) {
-                yyerror("IndentationError");
-                exit(1);
-            }
-        }
-
-        yyless(0); 
-        return yylex();
-    }
-}
-
-<INDENT_STATE>. {    
-    yyless(0);
-    
-    while (stack_peek(s) > 0) {
-        stack_pop(s);
-        dedent_line++;
-    }
-    
-    BEGIN(INITIAL);
-
-    return yylex();
-}
-
-<INDENT_STATE>\n {
-    BEGIN(INDENT_STATE);
-    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count); 
-    return NEWLINE;
-}
+[ \t\r]+        { /* Ignorar espaços em branco */ }
 
 \n { 
     newline_count++; // Incrementa o contador de "enters"
@@ -175,7 +132,55 @@ int yylex(void) {
     printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count); 
     return NEWLINE; 
 }
-[ \t\r]+        { /* Ignorar espaços em branco */ }
+
+<INDENT_STATE>[ \t]+/[^\n] {
+    int actual_level = strlen(yytext);
+    int previous_level = stack_peek(s);
+    printf("Indent level check: actual=%d, previous=%d\n", actual_level, previous_level);
+    BEGIN(INITIAL);
+
+    if (actual_level > previous_level) {
+        stack_push(s, actual_level);
+        printf("[LEXER] -> INDENT\n");
+        return INDENT;
+    } 
+    
+    if (actual_level < previous_level) {
+        while (stack_peek(s) > actual_level) {
+            stack_pop(s);
+            dedent_line++;
+        }
+        if (stack_peek(s) != actual_level) {
+            yyerror("IndentationError: unindent does not match any outer indentation level");
+            exit(1);
+        }
+        return yylex(); 
+    }
+    return yylex();
+}
+
+<INDENT_STATE>[ \t]*\n {
+    newline_count++;
+    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count);
+    return NEWLINE;
+}
+
+<INDENT_STATE>. {
+    int actual_level = 0;
+    int previous_level = stack_peek(s);
+     printf("Indent level check (no spaces): actual=%d, previous=%d\n", actual_level, previous_level);
+    
+    yyless(0);
+    BEGIN(INITIAL);
+
+    if (previous_level > 0) {
+         while (stack_peek(s) > 0) {
+            stack_pop(s);
+            dedent_line++;
+        }
+    }
+    return yylex();
+}
 
 <<EOF>> {
     if (eof_flag) {
@@ -190,6 +195,7 @@ int yylex(void) {
 
     return yylex();
 }
+
 
 . { printf("Caractere invalido: %s\n", yytext); }
 %%
