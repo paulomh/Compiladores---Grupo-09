@@ -1,17 +1,14 @@
 %{
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 #include "parser.tab.h"
+int line_num = 1;
 %}
 
 %%
-[#].*[\n]            { /* Ignorar comentarios */ }
-('''(.|[\n])*'''|"""(.|[\n])*""")   { /* Ignorar comentarios */ }
-
-[-\+]?[0-9]+ { yylval.intValue = atoi(yytext); return INT; }
-[-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
-[a-zA-Z_][a-zA-Z0-9_]* { yylval.strValue = strdup(yytext); return IDENTIFIER; }
-\"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
+[#].*[\n]            { line_num++; /* Ignorar comentarios */ }
+('''(.|[\n])*'''|"""(.|[\n])*""")   { for(char* p = yytext; *p; ++p) if(*p=='\n') line_num++; }
 
 "if"            { return IF; }
 "else"          { return ELSE; }
@@ -25,6 +22,11 @@
 "pass"          { return PASS; }
 "def"           { return DEF; }
 "return"        { return RETDEF; }
+
+[-\+]?[0-9]+ { yylval.intValue = atoi(yytext); return INT; }
+[-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
+[a-zA-Z_][a-zA-Z0-9_]* { yylval.strValue = strdup(yytext); return IDENTIFIER; }
+\"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
 
 "=="            { return EQUALS; }
 "!="            { return DIFFROM; }
@@ -52,8 +54,8 @@
 ":"             { return COLON; }
 ";"             { return SEMICOLON; }
 [ \t]+          { /* Ignorar espaços e tabs */ }
-\n              { /* Ignorar quebras de linha */ }
-. { printf("Caractere invalido: %s\n", yytext); }
+\n              { line_num++; return SEMICOLON; }
+. { printf("Erro léxico na linha %d: caractere invalido: %s\n", line_num, yytext); }
 %%
 
 int yywrap() { return 1; }
