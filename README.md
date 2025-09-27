@@ -22,7 +22,7 @@ Este projeto implementa um **compilador funcional para subconjunto Python** com 
 
 | <img src="https://github.com/xzxjesse.png" width="100px"> | <img src="https://github.com/Ruan-Carvalho.png" width="100px"> | <img src="https://github.com/paulomh.png" width="100px"> | <img src="https://github.com/LucasAvelar2711.png" width="100px"> |
 | :-------------------------------------------------------: | :-------------------------------------------------------: | :----------------------------------------------------------: | :-------------------------------------------------------------: |
-| **[Jesse Eveline](https://github.com/xzxjesse)**<br/>*Análise Léxica* | **[Ruan Carvalho](https://github.com/Ruan-Carvalho)**<br/>*Análise Sintática* | **[Paulo Henrique](https://github.com/paulomh)**<br/>*Análise Semântica* | **[Lucas Avelar](https://github.com/LucasAvelar2711)**<br/>*Geração de Código* |
+| **[Jesse Eveline](https://github.com/xzxjesse)**<br/> | **[Ruan Carvalho](https://github.com/Ruan-Carvalho)**<br/>| **[Paulo Henrique](https://github.com/paulomh)**<br/> | **[Lucas Avelar](https://github.com/LucasAvelar2711)** |
 
 ## Arquitetura Implementada
 
@@ -128,5 +128,4 @@ Consulte nosso [**Guia de Contribuição**](CONTRIBUTING.md) que inclui:
 <div align="center">
   <strong>Compilador Python Funcional - Grupo 09</strong><br>
   <sub>Universidade de Brasília - Compiladores 1 - 2025.2</sub><br><br>
-  <em>"Do código Python ao resultado: análise léxica e sintática completas!"</em>
 </div>
