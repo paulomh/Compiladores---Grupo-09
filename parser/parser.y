@@ -3,6 +3,15 @@
 #include <stdlib.h>
 #include <string.h>
 
+typedef struct stack {
+    int indent[100];
+    int indent_top;
+} stack;
+
+extern stack *s;
+
+extern stack *stack_init();
+
 int yylex(void);
 void yyerror(const char *s);
 
@@ -31,11 +40,13 @@ void print_result(int value) {
 %token EQUALS DIFFROM GTOREQUAL LSOREQUAL INCREMENT DECREMENT INCTIMES DIVBY MODBY EXPONENTIAL INTDIVIDE
 
 // Operadores simples sem valor semântico 
-%token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN COLON SEMICOLON
+%token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN COLON SEMICOLON COMMA
+
+// Indentação
+%token INDENT DEDENT NEWLINE
 
 // Declaração de tipos para regras gramaticais
 %type <intValue> expr
-%type <intValue> stmt
 
 // Precedência dos operadores (menor para maior)
 %left OR
@@ -49,17 +60,77 @@ void print_result(int value) {
 
 %%
 
-// Regras de alto nível: programa composto por múltiplos statements terminados por ';'
 program:
     /* vazio */
-  | program stmt
-  ;
+    | statement_list { printf("\n[SUCESSO!]"); }
+    ;
 
-// Cada statement deve terminar com ponto e vírgula
-stmt:
-    expr SEMICOLON { print_result($1); }
-  | error SEMICOLON { yyerrok; }
-  ;
+statement_list:
+    statement
+    | statement_list statement
+    ;
+
+statement:
+    NEWLINE
+    | simple_statement NEWLINE
+    | compound_statement
+    ;
+
+simple_statement:
+    expr { print_result($1); }
+    | return_statement
+    | assignment_statement
+    ;
+
+assignment_statement:
+    IDENTIFIER ASSIGNMENT expr
+    ;
+
+compound_statement:
+    if_statement
+    | function_definition
+    ;
+
+// Um "bloco" de código indentado
+suite:
+    NEWLINE INDENT statement_list DEDENT
+    ;
+
+if_statement:
+    IF expr COLON suite
+    | IF expr COLON suite ELSE COLON suite
+    ;
+
+function_definition:
+    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite
+    ;
+
+parameter_list:
+    /* vazio */
+    | parameter
+    | parameter_list COMMA parameter
+    ;
+
+parameter:
+    IDENTIFIER
+    | IDENTIFIER ASSIGNMENT expr
+    ;
+
+return_statement:
+    RETDEF
+    | RETDEF expr
+    ;
+
+function_call:
+    IDENTIFIER LPAREN argument_list RPAREN
+    ;
+
+argument_list:
+    
+    | expr
+    | argument_list COMMA expr
+    ;
+
 
 // Expressões aritméticas e lógicas
 expr:
@@ -84,8 +155,8 @@ expr:
   | FLOAT             { $$ = (int)$1; }
   | IDENTIFIER        { $$ = 0; } // Placeholder para variáveis
   | MINUS expr %prec UMINUS { $$ = -$2; }
+  | function_call
   ;
-
 
 %%
 
@@ -96,6 +167,7 @@ void yyerror(const char *s) {
 
 // Função de inicialização
 void init_compiler() {
+    s = stack_init();
     printf("=== Analisador Sintático do Compilador ===\n");
     printf("Digite uma expressão aritmética (Ctrl+D para sair):\n\n");
 }
