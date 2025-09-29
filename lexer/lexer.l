@@ -12,9 +12,32 @@ int lex_engine(void);
 void yyerror(const char *s);
 int yylex(void);
 
-// Variável para rastrear o número da linha
-int line_num = 1;
-
+/*
+ * regra <<EOF>> faz `return yylex()` que pode
+ * causar recursão infinita.
+ * 
+ * <<EOF>> {
+ *     if (eof_flag) {
+ *         return 0;
+ *     }
+ * 
+ *     eof_flag = 1;
+ *     while (stack_peek(s) > 0) {
+ *         stack_pop(s);
+ *         dedent_line++;
+ *     }
+ * 
+ *     // MUDANÇA CRÍTICA: Não chamar yylex() recursivamente
+ *     if (dedent_line > 0) {
+ *         // Deixa yylex() processar os DEDENTs na próxima chamada
+ *         printf("[LEXER] -> EOF com %d DEDENTs pendentes\n", dedent_line);
+ *         return 0; // Retorna 0 para indicar EOF, mas yylex() processará DEDENTs
+ *     }
+ * 
+ *     printf("[LEXER] -> END_OF_FILE\n");
+ *     return END_OF_FILE;
+ * }
+ * 
 
 typedef struct stack 
 {
@@ -65,11 +88,6 @@ int dedent_line = 0;
 int eof_flag = 0, endF = 0;
 int newline_count = 0; // Contador global de "enters"
 
-// Inicializar a stack global
-void init_lexer() {
-    s = stack_init();
-}
-
 int yylex(void) {
     if (dedent_line > 0) {
         dedent_line--;
@@ -83,9 +101,9 @@ int yylex(void) {
 %}
 
 %%
-#[^\n]*           { line_num++; printf("COMENTARIO SIMPLES\n"); /* Ignorar comentarios */ }
-\"\"\"([^"]|\n)*\"\"\"   { for(char* p = yytext; *p; ++p) if(*p=='\n') line_num++; printf("COMENTARIO COMPOSTO\n");}
-'''([^']|\n)*'''   { for(char* p = yytext; *p; ++p) if(*p=='\n') line_num++; printf("COMENTARIO COMPOSTO\n");}
+#[^\n]*           { printf("COMENTARIO SIMPLES\n"); /* Ignorar comentarios */ }
+\"\"\"([^"]|\n)*\"\"\"   { printf("COMENTARIO COMPOSTO\n");}
+'''([^']|\n)*'''   { printf("COMENTARIO COMPOSTO\n");}
 
 [-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
@@ -135,10 +153,9 @@ int yylex(void) {
 [ \t\r]+        { /* Ignorar espaços em branco */ }
 
 \n { 
-    line_num++; // Incrementa o contador de linhas
     newline_count++; // Incrementa o contador de "enters"
     BEGIN(INDENT_STATE); 
-    printf("[LEXER] -> NEWLINE (linha %d, Total: %d)\n", line_num, newline_count); 
+    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count); 
     return NEWLINE; 
 }
 
@@ -160,7 +177,6 @@ int yylex(void) {
             dedent_line++;
         }
         if (stack_peek(s) != actual_level) {
-            printf("Erro de indentação na linha %d: IndentationError: unindent does not match any outer indentation level\n", line_num);
             yyerror("IndentationError: unindent does not match any outer indentation level");
             exit(1);
         }
@@ -170,9 +186,8 @@ int yylex(void) {
 }
 
 <INDENT_STATE>[ \t]*\n {
-    line_num++;
     newline_count++;
-    printf("[LEXER] -> NEWLINE (linha %d, Total: %d)\n", line_num, newline_count);
+    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count);
     return NEWLINE;
 }
 
@@ -194,6 +209,7 @@ int yylex(void) {
 }
 
 <<EOF>> {
+    
     if (eof_flag) {
         return 0;
     }
@@ -204,35 +220,11 @@ int yylex(void) {
         dedent_line++;
     }
 
-    return yylex();
+    return yylex(); // <- ESTA LINHA CAUSA O LOOP INFINITO
 }
 
 
-. { printf("Erro léxico na linha %d: caractere invalido: %s\n", line_num, yytext); }
+. { printf("Caractere invalido: %s\n", yytext); }
 %%
 
 int yywrap() { return 1; }
-
-int main(int argc, char *argv[]) {
-    init_lexer();
-    printf("=== Analisador Léxico do Compilador ===\n");
-    
-    if (argc > 1) {
-        // Ler de arquivo
-        FILE *file = fopen(argv[1], "r");
-        if (file) {
-            yyrestart(file);
-            printf("Analisando arquivo: %s\n\n", argv[1]);
-            yylex();
-            fclose(file);
-        } else {
-            printf("Erro: Não foi possível abrir o arquivo %s\n", argv[1]);
-            return 1;
-        }
-    } else {
-        // Ler da entrada padrão
-        printf("Digite código Python (Ctrl+D para sair):\n\n");
-        yylex();
-    }
-    return 0;
-}
