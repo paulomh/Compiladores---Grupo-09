@@ -14,6 +14,8 @@ TARGET = compilador
 LEXER_SRC = lexer/lexer.l
 PARSER_SRC = parser/parser.y
 MAIN_SRC = src/main.c
+AST_SRC = src/ast.c
+TABELA_SRC = src/tabela.c
 
 # Arquivos gerados
 LEXER_C = lex.yy.c
@@ -21,7 +23,7 @@ PARSER_C = parser.tab.c
 PARSER_H = parser.tab.h
 
 # Objetos
-OBJECTS = $(LEXER_C:.c=.o) $(PARSER_C:.c=.o) $(MAIN_SRC:.c=.o)
+OBJECTS = $(LEXER_C:.c=.o) $(PARSER_C:.c=.o) $(MAIN_SRC:.c=.o) $(AST_SRC:.c=.o) $(TABELA_SRC:.c=.o)
 
 # Regra principal
 all: $(TARGET)
@@ -45,7 +47,7 @@ $(PARSER_C) $(PARSER_H): $(PARSER_SRC)
 
 # Limpar arquivos gerados
 clean:
-	rm -f $(LEXER_C) $(PARSER_C) $(PARSER_H) *.o $(TARGET)
+	rm -f $(LEXER_C) $(PARSER_C) $(PARSER_H) *.o src/*.o $(TARGET)
 	rm -f parser.output
 	@echo "🧹 Arquivos de compilação removidos"
 
@@ -82,11 +84,21 @@ help:
 	@echo "  make help     - Mostrar esta ajuda"
 
 # Dependências
-$(MAIN_SRC:.c=.o): $(PARSER_H)
+$(MAIN_SRC:.c=.o): $(PARSER_H) src/ast.h src/tabela.h
 $(LEXER_C:.c=.o): $(PARSER_H)
+$(AST_SRC:.c=.o): src/ast.h
+$(TABELA_SRC:.c=.o): src/tabela.h
 
-# Forçar recompilação do main.c após parser.tab.h
-src/main.o: src/main.c $(PARSER_H)
+# Forçar recompilação do main.c após parser.tab.h e headers
+src/main.o: src/main.c $(PARSER_H) src/ast.h src/tabela.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compilar ast.c
+src/ast.o: src/ast.c src/ast.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compilar tabela.c
+src/tabela.o: src/tabela.c src/tabela.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .PHONY: all clean run test example run-example help

@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "../parser.tab.h"
+#include "ast.h"
+#include "tabela.h"
 
 extern int yyparse();
 extern FILE* yyin;
