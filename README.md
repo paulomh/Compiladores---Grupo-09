@@ -11,9 +11,13 @@ Compilador desenvolvido para a disciplina Compiladores 1 usando Flex e Bison. An
 │   └── parser.y         # Analisador sintático (Bison) - Regras gramaticais
 ├── src/
 │   └── main.c           # Programa principal
+├── tests/               # Suite completa de testes
+│   ├── README.md        # Guia de execução de testes
+│   ├── run_all_tests.sh # Script principal de testes
+│   ├── scripts/         # Scripts de teste
+│   └── files/           # Arquivos de teste Python
 ├── Makefile             # Sistema de build
 ├── compilar.sh          # Script de compilação
-├── testes.sh            # Script de testes abrangente
 └── README.md            # Documentação do projeto
 ```
 
@@ -127,9 +131,17 @@ echo "3 + 4 * 2" | ./compilador
 
 ### Testes
 ```bash
-# Executar suite completa de testes (32 testes)
-chmod +x testes.sh
-./testes.sh
+# Executar TODOS os testes (129 testes)
+./tests/run_all_tests.sh
+
+# Executar apenas testes inline (115 testes de expressões)
+./tests/scripts/testes.sh
+
+# Executar apenas testes de arquivos (14 testes de funcionalidades)
+./tests/scripts/testes_arquivos.sh
+
+# Teste individual de arquivo
+./compilador tests/files/01_conditional_basic.py
 
 # Testes manuais
 echo "3 + 4" | ./compilador
@@ -156,16 +168,28 @@ echo "-5" | ./compilador             # Resultado: -5
 echo "-3 + 7" | ./compilador         # Resultado: 4
 ```
 
-### Testes Automatizados por Script
-O projeto inclui 32 testes automatizados que cobrem:
-- Operações básicas (+, -, *, /)
+### Suite de Testes Automatizada
+O projeto inclui 129 testes automatizados organizados em duas categorias:
+
+#### Testes Inline (115 testes)
+- Operações básicas (+, -, *, /, %, **, //)
+- Operadores lógicos (and, or, not)
+- Operadores de comparação (==, !=, >, <, >=, <=)
 - Precedência de operadores
-- Números negativos
-- Parênteses complexos
-- Divisão (incluindo divisão por zero)
-- Expressões longas
-- Casos especiais
+- Números negativos e decimais
+- Parênteses complexos e aninhados
+- Casos de erro e sintaxe inválida
 - Expressões com espaços
+
+#### Testes de Arquivos (14 testes)
+- Estruturas condicionais (if/else)
+- Indentação Python e blocos aninhados
+- Atribuições de variáveis
+- Definições de função
+- Comentários simples e de bloco
+- Casos de erro (indentação, sintaxe, parênteses)
+
+Para mais detalhes sobre como executar os testes, consulte: `tests/README.md`
 
 ## Solução de Problemas
 
