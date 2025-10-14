@@ -1,218 +1,131 @@
-# Compilador - Grupo 09
+# Compilador Python - Grupo 09
 
-Compilador desenvolvido para a disciplina Compiladores 1 usando Flex e Bison. Analisador de expressões aritméticas com suporte a operadores Python.
+[![Linguagem](https://img.shields.io/badge/linguagem-Python-blue)](https://www.python.org/)
+[![Flex](https://img.shields.io/badge/flex-2.6+-green)](https://github.com/westes/flex)
+[![Bison](https://img.shields.io/badge/bison-3.8+-green)](https://www.gnu.org/software/bison/)
 
-## Estrutura do Projeto
+> Compilador para subconjunto Python desenvolvido para a disciplina **Compiladores 1** - UnB/2025.2
+
+Este projeto implementa um **compilador funcional para subconjunto Python** com foco em expressões aritméticas, estruturas de controle e gerenciamento completo de indentação Python. Atualmente suporta análise léxica e sintática completas com avaliação de expressões.
+
+## Funcionalidades Implementadas
+
+- **Análise Léxica**: Reconhecimento completo de tokens Python usando Flex
+- **Análise Sintática**: Parser funcional com gramática Python usando Bison  
+- **Avaliação de Expressões**: Cálculo de expressões aritméticas e lógicas
+- **Indentação Python**: Gerenciamento de INDENT/DEDENT
+- **Estruturas de Controle**: Parsing de if/else, funções, loops
+- **Análise Semântica**: Em desenvolvimento
+- **Geração de Código**: Planejado
+
+## Equipe de Desenvolvimento
+
+| <img src="https://github.com/xzxjesse.png" width="100px"> | <img src="https://github.com/Ruan-Carvalho.png" width="100px"> | <img src="https://github.com/paulomh.png" width="100px"> | <img src="https://github.com/LucasAvelar2711.png" width="100px"> |
+| :-------------------------------------------------------: | :-------------------------------------------------------: | :----------------------------------------------------------: | :-------------------------------------------------------------: |
+| **[Jesse Eveline](https://github.com/xzxjesse)**<br/> | **[Ruan Carvalho](https://github.com/Ruan-Carvalho)**<br/>| **[Paulo Henrique](https://github.com/paulomh)**<br/> | **[Lucas Avelar](https://github.com/LucasAvelar2711)** |
+
+## Arquitetura Implementada
 
 ```
-├── lexer/
-│   └── lexer.l          # Analisador léxico (Flex) - Suporte Python
-├── parser/
-│   └── parser.y         # Analisador sintático (Bison) - Regras gramaticais
-├── src/
-│   └── main.c           # Programa principal
-├── tests/               # Suite completa de testes
-│   ├── README.md        # Guia de execução de testes
-│   ├── run_all_tests.sh # Script principal de testes
-│   ├── scripts/         # Scripts de teste
-│   └── files/           # Arquivos de teste Python
-├── Makefile             # Sistema de build
-├── compilar.sh          # Script de compilação
-└── README.md            # Documentação do projeto
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Código Python   │──▶│ Análise Léxica   │───▶│   Tokens       │
+│    (.py)        │    │    (Flex)       │    │   + Indentação  │
+└─────────────────┘    └─────────────────┘    └─────────────────┘
+                                                        │
+                       ┌─────────────────┐    ┌─────────▼─────────┐
+                       │   Resultado     │◀───│ Análise Sintática│
+                       │  (Avaliação)    │    │    (Bison)        │
+                       └─────────────────┘    └───────────────────┘
 ```
 
-## Arquitetura
+## Documentação Disponível
 
-### Analisador Léxico (lexer.l)
-- Reconhece tokens da linguagem Python
-- Suporte a comentários de linha e bloco
-- Números inteiros e decimais com sinal
-- Strings entre aspas simples e duplas
-- Palavras-chave e operadores Python
+- **[Características Técnicas](Caracteristicas%20Tecnicas.md)**: Especificações técnicas detalhadas da implementação
+- **[Configuração do Ambiente](Configuracao%20Ambiente.md)**: Guia completo de setup e instalação  
+- **[Guia de Contribuição](CONTRIBUTING.md)**: Workflow e padrões de desenvolvimento específicos para compiladores
 
-### Analisador Sintático (parser.y)
-- Regras gramaticais para expressões aritméticas e lógicas
-- Precedência correta dos operadores
-- Suporte a parênteses e operadores unários
-- Tratamento de erros sintáticos
+## Status do Projeto
 
-### Programa Principal (main.c)
-- Interface de linha de comando
-- Suporte a entrada via arquivo ou stdin
-- Tratamento de erros e mensagens informativas
+### Atual: 
+- [x] Formação da equipe e organização inicial
+- [x] Configuração do ambiente de desenvolvimento
+- [x] Definição da linguagem-fonte (subconjunto Python)
+- [x] Elaboração da gramática formal Python
+- [x] Implementação do analisador léxico
+- [x] Implementação do analisador sintático
+- [x] Sistema de gerenciamento de indentação
+- [x] Avaliação de expressões aritméticas
 
-## Funcionalidades
+### Próximas Etapas
+- Análise semântica (tabela de símbolos, verificação de tipos)
+- Geração de código intermediário e execução de variáveis
+- Suporte a funções e otimizações básicas
+- Documentação completa
 
-### Operadores Suportados
-- **Aritméticos:** `+`, `-`, `*`, `/`, `%`, `**`, `//`
-- **Comparação:** `==`, `!=`, `>=`, `<=`, `>`, `<`
-- **Lógicos:** `and`, `or`, `not`
-- **Atribuição:** `=`, `+=`, `-=`, `*=`, `/=`, `%=`
+### Componentes Implementados
 
-### Tipos de Dados
-- **Inteiros:** `123`, `-45`
-- **Decimais:** `3.14`, `-2.5`
-- **Identificadores:** `variavel`, `_nome`
-- **Strings:** `"texto"`, `'string'`
+#### **Analisador Léxico** (`lexer/lexer.l`)
+- **Ferramenta**: Flex
+- **Funcionalidades**: 
+  - Reconhecimento de tokens Python
+  - Gerenciamento de indentação (INDENT/DEDENT)
+  - Suporte a comentários (linha única e múltiplas linhas)
+  - Números inteiros e decimais com sinal
+  - Strings com aspas simples e duplas
+- **Tokens**: 46+ tipos diferentes
 
-### Palavras-chave Python
-- `if`, `else`, `while`, `for`, `def`, `return`
-- `and`, `or`, `not`, `is`, `in`, `pass`
+#### **Analisador Sintático** (`parser/parser.y`)
+- **Ferramenta**: Bison
+- **Funcionalidades**:
+  - Gramática Python com precedência de operadores
+  - Estruturas de controle (if/else)
+  - Definições de função (def)
+  - Avaliação de expressões aritméticas e lógicas
+- **Ações Semânticas**: Cálculo direto de resultados
 
-### Comentários
-- **Linha única:** `# comentário`
-- **Bloco:** `"""comentário"""` ou `'''comentário'''`
+#### **Programa Principal** (`src/main.c`)
+- **Funcionalidades**:
+  - Interface de linha de comando
+  - Suporte a entrada via arquivo ou stdin  
+  - Inicialização do compilador
+  - Tratamento de erros básico
 
-## Configuração do Ambiente
+## Funcionalidades vs. Limitações
 
-### Pré-requisitos
-- WSL (Windows Subsystem for Linux) ou Linux
-- Flex e Bison
-- GCC (compilador C)
-- Make
-
-### Instalação das Ferramentas
-
-#### No WSL/Ubuntu:
-```bash
-# Atualizar sistema
-sudo apt update && sudo apt upgrade -y
-
-# Instalar ferramentas de desenvolvimento
-sudo apt install -y build-essential flex bison make
-
-# Verificar instalação
-flex --version
-bison --version
-gcc --version
-```
-
-#### No Windows (PowerShell como Administrador):
-```powershell
-# Instalar WSL
-wsl --install
-
-# Instalar Ubuntu
-wsl --install -d Ubuntu
-```
-
-## Como Usar
-
-### Compilação
-```bash
-# Método 1: Script automático (Recomendado)
-chmod +x compilar.sh
-./compilar.sh
-
-# Método 2: Make
-make clean
-make
-
-# Método 3: Manual
-flex lexer/lexer.l
-bison -d -v -o parser.tab.c parser/parser.y
-gcc -Wall -Wextra -std=c99 -c lex.yy.c -o lex.yy.o
-gcc -Wall -Wextra -std=c99 -c parser.tab.c -o parser.tab.o
-gcc -Wall -Wextra -std=c99 -c src/main.c -o src/main.o
-gcc -Wall -Wextra -std=c99 -o compilador lex.yy.o parser.tab.o src/main.o -lfl
-```
-
-### Execução
-```bash
-# Executar com entrada interativa
-./compilador
-
-# Executar com arquivo
-./compilador arquivo.txt
-
-# Exemplo de uso
-echo "3 + 4 * 2" | ./compilador
-```
-
-### Testes
-```bash
-# Executar TODOS os testes (129 testes)
-./tests/run_all_tests.sh
-
-# Executar apenas testes inline (115 testes de expressões)
-./tests/scripts/testes.sh
-
-# Executar apenas testes de arquivos (14 testes de funcionalidades)
-./tests/scripts/testes_arquivos.sh
-
-# Teste individual de arquivo
-./compilador tests/files/01_conditional_basic.py
-
-# Testes manuais
-echo "3 + 4" | ./compilador
-echo "2 * (3 + 4)" | ./compilador
-echo "-5 + 3" | ./compilador
-```
-
-## Exemplos de Uso
-
-### Expressões Aritméticas
-```bash
-# Operações básicas
-echo "3 + 4" | ./compilador          # Resultado: 7
-echo "10 - 3" | ./compilador         # Resultado: 7
-echo "2 * 5" | ./compilador          # Resultado: 10
-echo "15 / 3" | ./compilador         # Resultado: 5
-
-# Precedência de operadores
-echo "2 + 3 * 4" | ./compilador      # Resultado: 14
-echo "(2 + 3) * 4" | ./compilador    # Resultado: 20
-
-# Números negativos
-echo "-5" | ./compilador             # Resultado: -5
-echo "-3 + 7" | ./compilador         # Resultado: 4
-```
-
-### Suite de Testes Automatizada
-O projeto inclui 129 testes automatizados organizados em duas categorias:
-
-#### Testes Inline (115 testes)
-- Operações básicas (+, -, *, /, %, **, //)
+### **O que FUNCIONA**
+- Reconhecimento completo de tokens Python
+- Parsing de estruturas de controle (if/else, def, while, for)
+- Avaliação de expressões aritméticas complexas
 - Operadores lógicos (and, or, not)
-- Operadores de comparação (==, !=, >, <, >=, <=)
-- Precedência de operadores
-- Números negativos e decimais
-- Parênteses complexos e aninhados
-- Casos de erro e sintaxe inválida
-- Expressões com espaços
+- Gerenciamento de indentação Python (INDENT/DEDENT)
+- Sistema de testes
+- Tratamento de comentários (linha única e múltiplas linhas)
 
-#### Testes de Arquivos (14 testes)
-- Estruturas condicionais (if/else)
-- Indentação Python e blocos aninhados
-- Atribuições de variáveis
-- Definições de função
-- Comentários simples e de bloco
-- Casos de erro (indentação, sintaxe, parênteses)
+### **Limitações Atuais**
+- **Variáveis**: Não armazena/recupera valores de variáveis
+- **Funções**: Apenas parsing, sem execução real
+- **Loops**: Reconhece sintaxe mas não executa iterações  
+- **Tipos**: Conversão limitada (float → int)
+- **Escopo**: Sem tabela de símbolos implementada
 
-Para mais detalhes sobre como executar os testes, consulte: `tests/README.md`
+## Como Contribuir
 
-## Solução de Problemas
+Consulte nosso [**Guia de Contribuição**](CONTRIBUTING.md) que inclui:
+- Padrões de commits específicos para compiladores
+- Workflow de branches por componente
+- Checklist de code review para cada fase
+- Templates de PR e testes
 
-### Erro: "make: command not found"
-```bash
-sudo apt install -y make
-```
+## Informações do Projeto
 
-### Erro: "flex: command not found"
-```bash
-sudo apt install -y flex
-```
+- **Professor**: Sérgio Freitas (sergiofreitas@unb.br)
+- **Disciplina**: Compiladores 1 - UnB/2025.2  
+- **Semestre**: 2025.2
+- **Universidade**: Universidade de Brasília (UnB)
 
-### Erro: "bison: command not found"
-```bash
-sudo apt install -y bison
-```
+---
 
-### Erro: "gcc: command not found"
-```bash
-sudo apt install -y build-essential
-```
-
-## Grupo 09
-
-Desenvolvido para a disciplina Compiladores 1 - Universidade de Brasília
+<div align="center">
+  <strong>Compilador Python Funcional - Grupo 09</strong><br>
+  <sub>Universidade de Brasília - Compiladores 1 - 2025.2</sub><br><br>
+</div>
