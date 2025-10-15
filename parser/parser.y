@@ -27,6 +27,7 @@ void print_result(int value) {
     int intValue;
     double floatValue;
     char* strValue;
+    struct NoAST* no;
 }
 
 // Com valor semantico 
@@ -48,7 +49,20 @@ void print_result(int value) {
 %token INDENT DEDENT NEWLINE
 
 // Declaração de tipos para regras gramaticais
-%type <intValue> expr
+%type <no> expr
+%type <no> simple_statement
+%type <no> assignment_statement
+%type <no> statement
+%type <no> statement_list
+%type <no> compound_statement
+%type <no> if_statement
+%type <no> suite
+%type <no> function_definition
+%type <no> parameter_list
+%type <no> parameter
+%type <no> return_statement
+%type <no> function_call
+%type <no> argument_list
 
 // Precedência dos operadores (menor para maior)
 %left OR
@@ -63,13 +77,19 @@ void print_result(int value) {
 %%
 
 program:
-    /* vazio */
-    | statement_list { printf("\n[SUCESSO!]"); }
+    /* vazio */        { $$ = NULL; }
+    | statement_list   { 
+        $$ = $1;
+        printf("\n[SUCESSO!] AST construída com sucesso\n");
+        imprimirAST($$);  // Imprimir a árvore para debug
+    }
     ;
 
 statement_list:
-    statement
-    | statement_list statement
+    statement           { $$ = $1; }
+    | statement_list statement {
+        $$ = novoNoOp(';', $1, $2);  // Usa ; como operador de sequência
+    }
     ;
 
 statement:
@@ -79,43 +99,61 @@ statement:
     ;
 
 simple_statement:
-    expr { print_result($1); }
-    | return_statement
-    | assignment_statement
+    expr               { $$ = $1; }
+    | return_statement { $$ = $1; }
+    | assignment_statement { $$ = $1; }
     ;
 
 assignment_statement:
-    IDENTIFIER ASSIGNMENT expr
+    IDENTIFIER ASSIGNMENT expr {
+        $$ = novoNoOp('=', novoNoId($1, T_INT), $3);
+    }
     ;
 
 compound_statement:
     if_statement
     | function_definition
-    ;
+   ;
 
 // Um "bloco" de código indentado
 suite:
-    NEWLINE INDENT statement_list DEDENT
+    NEWLINE INDENT statement_list DEDENT { $$ = $3; }
     ;
 
 if_statement:
-    IF expr COLON suite
-    | IF expr COLON suite ELSE COLON suite
+    IF expr COLON suite {
+        $$ = novoNoOp('?', $2, $4);  // ? representa IF
+    }
+    | IF expr COLON suite ELSE COLON suite {
+        NoAST* if_node = novoNoOp('?', $2, $4);
+        $$ = novoNoOp(':', if_node, $7);  // : representa ELSE
+    }
     ;
 
 function_definition:
-    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite
+    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite {
+        NoAST* func_name = novoNoId($2, T_INT);
+        NoAST* func_params = $4;
+        NoAST* func_body = $7;
+        $$ = novoNoOp('F', novoNoOp('P', func_name, func_params), func_body);
+    }
     ;
 
 parameter_list:
-    /* vazio */
-    | parameter
-    | parameter_list COMMA parameter
+    /* vazio */        { $$ = NULL; }
+    | parameter        { $$ = $1; }
+    | parameter_list COMMA parameter {
+        $$ = novoNoOp(',', $1, $3);
+    }
     ;
 
 parameter:
-    IDENTIFIER
-    | IDENTIFIER ASSIGNMENT expr
+    IDENTIFIER {
+        $$ = novoNoId($1, T_INT);
+    }
+    | IDENTIFIER ASSIGNMENT expr {
+        $$ = novoNoOp('=', novoNoId($1, T_INT), $3);
+    }
     ;
 
 return_statement:
@@ -124,40 +162,43 @@ return_statement:
     ;
 
 function_call:
-    IDENTIFIER LPAREN argument_list RPAREN
+    IDENTIFIER LPAREN argument_list RPAREN {
+        $$ = novoNoOp('C', novoNoId($1, T_INT), $3);  // C representa Call
+    }
     ;
 
 argument_list:
-    
-    | expr
-    | argument_list COMMA expr
+    /* vazio */        { $$ = NULL; }
+    | expr             { $$ = $1; }
+    | argument_list COMMA expr {
+        $$ = novoNoOp(',', $1, $3);
+    }
     ;
 
 
 // Expressões aritméticas e lógicas
 expr:
-    expr OR expr      { $$ = $1 || $3; }
-  | expr AND expr     { $$ = $1 && $3; }
-  | NOT expr          { $$ = !$2; }
-  | expr EQUALS expr  { $$ = $1 == $3; }
-  | expr DIFFROM expr { $$ = $1 != $3; }
-  | expr GREATER expr { $$ = $1 > $3; }
-  | expr LESS expr    { $$ = $1 < $3; }
-  | expr GTOREQUAL expr { $$ = $1 >= $3; }
-  | expr LSOREQUAL expr { $$ = $1 <= $3; }
-  | expr PLUS expr    { $$ = $1 + $3; }
-  | expr MINUS expr   { $$ = $1 - $3; }
-  | expr TIMES expr   { $$ = $1 * $3; }
-  | expr DIVIDE expr  { $$ = $3 != 0 ? $1 / $3 : 0; }
-  | expr MODULE expr  { $$ = $3 != 0 ? $1 % $3 : 0; }
-  | expr INTDIVIDE expr { $$ = $3 != 0 ? $1 / $3 : 0; }
-  | expr EXPONENTIAL expr { $$ = 1; for(int i = 0; i < $3; i++) $$ *= $1; }
-  | LPAREN expr RPAREN { $$ = $2; }
-  | INT               { $$ = $1; }
-  | FLOAT             { $$ = (int)$1; }
-  | IDENTIFIER        { $$ = 0; } // Placeholder para variáveis
-  | MINUS expr %prec UMINUS { $$ = -$2; }
-  | function_call
+    expr OR expr        { $$ = novoNoOp('||', $1, $3); }
+  | expr AND expr       { $$ = novoNoOp('&&', $1, $3); }
+  | NOT expr            { $$ = novoNoOp('!', $2, NULL); }
+  | expr EQUALS expr    { $$ = novoNoOp('=', $1, $3); }
+  | expr DIFFROM expr   { $$ = novoNoOp('!=', $1, $3); }
+  | expr GREATER expr   { $$ = novoNoOp('>', $1, $3); }
+  | expr LESS expr      { $$ = novoNoOp('<', $1, $3); }
+  | expr GTOREQUAL expr { $$ = novoNoOp('>=', $1, $3); }  // g para >=
+  | expr LSOREQUAL expr { $$ = novoNoOp('<=', $1, $3); }  // l para <=
+  | expr PLUS expr      { $$ = novoNoOp('+', $1, $3); }
+  | expr MINUS expr     { $$ = novoNoOp('-', $1, $3); }
+  | expr TIMES expr     { $$ = novoNoOp('*', $1, $3); }
+  | expr DIVIDE expr    { $$ = novoNoOp('/', $1, $3); }
+  | expr MODULE expr    { $$ = novoNoOp('%', $1, $3); }
+  | expr EXPONENTIAL expr{ $$ = novoNoOp('^', $1, $3); }
+  | LPAREN expr RPAREN  { $$ = $2; }
+  | INT                 { $$ = novoNoNum($1); }
+  | FLOAT               { $$ = novoNoNum((int)$1); }  // Temporário até implementar float
+  | IDENTIFIER          { $$ = novoNoId($1, T_INT); }
+  | MINUS expr %prec UMINUS { $$ = novoNoOp('-', novoNoNum(0), $2); }
+  | function_call       { $$ = $1; }
   ;
 
 %%
