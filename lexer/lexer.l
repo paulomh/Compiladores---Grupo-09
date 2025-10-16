@@ -163,8 +163,10 @@ int yylex(void) {
 
 <INDENT_STATE>[ \t]*\n {
     newline_count++;
-    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count);
-    return NEWLINE;
+    // Linha em branco: não emitir NEWLINE para não quebrar contagem/EOF
+    // Sem return => apenas consome e segue escaneando
+
+
 }
 
 <INDENT_STATE>. {
