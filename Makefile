@@ -1,105 +1,72 @@
 # Makefile para o Compilador - Grupo 09
-# Compilador usando Flex e Bison
 
+# Compiladores
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
 LEX = flex
 YACC = bison
-YFLAGS = -d -v
+
+# Flags
+CFLAGS = -Wall -Wextra -std=c99 -I.
+LDFLAGS = -lfl
+
+# Diretórios
+SRC_DIR = src
+PARSER_DIR = parser
+LEXER_DIR = lexer
 
 # Nome do executável
 TARGET = compilador
 
 # Arquivos fonte
-LEXER_SRC = lexer/lexer.l
-PARSER_SRC = parser/parser.y
-MAIN_SRC = src/main.c
-AST_SRC = src/ast.c
-TABELA_SRC = src/tabela.c
+LEXER_SRC = $(LEXER_DIR)/lexer.l
+PARSER_SRC = $(PARSER_DIR)/parser.y
+AST_SRC = $(SRC_DIR)/ast.c
+AST_ATRIB_SRC = $(SRC_DIR)/ast_atrib.c
+TABELA_SRC = $(SRC_DIR)/tabela.c
+MAIN_SRC = $(SRC_DIR)/main.c
 
-# Arquivos gerados
-LEXER_C = lex.yy.c
-PARSER_C = parser.tab.c
-PARSER_H = parser.tab.h
+# Arquivos objeto
+LEXER_OBJ = $(LEXER_DIR)/lex.yy.o
+PARSER_OBJ = $(PARSER_DIR)/parser.tab.o
+AST_OBJ = $(SRC_DIR)/ast.o
+AST_ATRIB_OBJ = $(SRC_DIR)/ast_atrib.o
+TABELA_OBJ = $(SRC_DIR)/tabela.o
+MAIN_OBJ = $(SRC_DIR)/main.o
 
-# Objetos
-OBJECTS = $(LEXER_C:.c=.o) $(PARSER_C:.c=.o) $(MAIN_SRC:.c=.o) $(AST_SRC:.c=.o) $(TABELA_SRC:.c=.o)
+OBJS = $(LEXER_OBJ) $(PARSER_OBJ) $(AST_OBJ) $(TABELA_OBJ) $(MAIN_OBJ)
 
-# Regra principal
+# Regras
 all: $(TARGET)
 
-# Compilar o executável
-$(TARGET): $(OBJECTS)
-	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) -lfl
-	@echo "✅ Compilador compilado com sucesso!"
+$(TARGET): $(OBJS)
+	$(CC) $(OBJS) -o $@ $(LDFLAGS)
 
-# Gerar arquivo C do lexer
-$(LEXER_C): $(LEXER_SRC)
-	$(LEX) $(LEXER_SRC)
+$(LEXER_DIR)/lex.yy.c: $(LEXER_SRC) $(PARSER_DIR)/parser.tab.h
+	$(LEX) -o $@ $<
 
-# Gerar arquivos C e H do parser
-$(PARSER_C) $(PARSER_H): $(PARSER_SRC)
-	$(YACC) $(YFLAGS) -o parser.tab.c $(PARSER_SRC)
+$(PARSER_DIR)/parser.tab.c $(PARSER_DIR)/parser.tab.h: $(PARSER_SRC)
+	$(YACC) -d -o $(PARSER_DIR)/parser.tab.c $<
 
-# Compilar objetos
-%.o: %.c
+$(LEXER_OBJ): $(LEXER_DIR)/lex.yy.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
-# Limpar arquivos gerados
+$(PARSER_OBJ): $(PARSER_DIR)/parser.tab.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(AST_OBJ): $(AST_SRC)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TABELA_OBJ): $(TABELA_SRC)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(MAIN_OBJ): $(MAIN_SRC)
+	$(CC) $(CFLAGS) -c $< -o $@
+
 clean:
-	rm -f $(LEXER_C) $(PARSER_C) $(PARSER_H) *.o src/*.o $(TARGET)
+	rm -f $(LEXER_DIR)/lex.yy.c
+	rm -f $(PARSER_DIR)/parser.tab.c $(PARSER_DIR)/parser.tab.h
+	rm -f $(OBJS)
+	rm -f $(TARGET)
 	rm -f parser.output
-	@echo "🧹 Arquivos de compilação removidos"
 
-# Executar o compilador
-run: $(TARGET)
-	./$(TARGET)
-
-# Testar com arquivo de exemplo
-test: $(TARGET)
-	@echo "Testando com entrada padrão..."
-	@echo "x = 10 + 5" | ./$(TARGET)
-
-# Criar arquivo de exemplo
-example:
-	@echo "x = 10 + 5" > exemplo.txt
-	@echo "y = x * 2" >> exemplo.txt
-	@echo "if x > 5:" >> exemplo.txt
-	@echo "    print(x)" >> exemplo.txt
-	@echo "Arquivo de exemplo criado: exemplo.txt"
-
-# Executar com arquivo de exemplo
-run-example: $(TARGET) example
-	./$(TARGET) exemplo.txt
-
-# Mostrar ajuda
-help:
-	@echo "Comandos disponíveis:"
-	@echo "  make          - Compilar o compilador"
-	@echo "  make clean    - Limpar arquivos gerados"
-	@echo "  make run      - Executar o compilador"
-	@echo "  make test     - Testar com entrada padrão"
-	@echo "  make example  - Criar arquivo de exemplo"
-	@echo "  make run-example - Executar com arquivo de exemplo"
-	@echo "  make help     - Mostrar esta ajuda"
-
-# Dependências
-$(MAIN_SRC:.c=.o): $(PARSER_H) src/ast.h src/tabela.h
-$(LEXER_C:.c=.o): $(PARSER_H)
-$(AST_SRC:.c=.o): src/ast.h
-$(TABELA_SRC:.c=.o): src/tabela.h
-
-# Forçar recompilação do main.c após parser.tab.h e headers
-src/main.o: src/main.c $(PARSER_H) src/ast.h src/tabela.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Compilar ast.c
-src/ast.o: src/ast.c src/ast.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-# Compilar tabela.c
-src/tabela.o: src/tabela.c src/tabela.h
-	$(CC) $(CFLAGS) -c $< -o $@
-
-.PHONY: all clean run test example run-example help
-
+.PHONY: all clean
