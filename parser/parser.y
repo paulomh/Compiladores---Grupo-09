@@ -5,6 +5,8 @@
 #include "src/ast.h"
 #include "src/tabela.h"
 
+extern int yylineno;
+
 typedef struct stack {
     int indent[100];
     int indent_top;
@@ -25,15 +27,18 @@ void print_result(int value) {
 
 %union {
     int intValue;
-    double floatValue;
+    float floatValue;
     char* strValue;
-    struct NoAST* no;
+    NoAST* no;
+    Tipo tipo;
 }
 
 // Com valor semantico 
 %token <intValue> INT
 %token <floatValue> FLOAT
 %token <strValue> IDENTIFIER
+
+// Tokens com valor semântico
 %token <strValue> STRING
 
 // Palavras reservadas sem valor semântico 
@@ -48,21 +53,22 @@ void print_result(int value) {
 // Indentação
 %token INDENT DEDENT NEWLINE
 
-// Declaração de tipos para regras gramaticais
-%type <no> expr
-%type <no> simple_statement
-%type <no> assignment_statement
-%type <no> statement
+// Tipos das regras gramaticais
+%type <no> program
 %type <no> statement_list
-%type <no> compound_statement
+%type <no> statement
 %type <no> if_statement
 %type <no> suite
 %type <no> function_definition
 %type <no> parameter_list
 %type <no> parameter
+%type <no> expr
+%type <no> simple_statement
+%type <no> assignment_statement
 %type <no> return_statement
 %type <no> function_call
 %type <no> argument_list
+%type <no> compound_statement
 
 // Precedência dos operadores (menor para maior)
 %left OR
@@ -93,9 +99,9 @@ statement_list:
     ;
 
 statement:
-    NEWLINE
-    | simple_statement NEWLINE
-    | compound_statement
+    NEWLINE { $$ = NULL; }
+    | simple_statement NEWLINE { $$ = $1; }
+    | compound_statement { $$ = $1; }
     ;
 
 simple_statement:
@@ -106,7 +112,20 @@ simple_statement:
 
 assignment_statement:
     IDENTIFIER ASSIGNMENT expr {
-        $$ = novoNoOp('=', novoNoId($1, T_INT), $3);
+        Simbolo *s = buscarSimbolo($1);
+        if (s == NULL) {
+            inserirSimbolo($1, $3->tipo); // Usa o tipo da expressão
+            $$ = novoNoAtrib($1, $3);
+        } else {
+            if (s->tipo != $3->tipo && s->tipo != T_ERRO && $3->tipo != T_ERRO) {
+                printf("Erro na linha %d: Tipos incompatíveis na atribuição. Variável '%s' é do tipo %s mas recebeu valor do tipo %s\n", 
+                       yylineno, $1, getTipoString(s->tipo), getTipoString($3->tipo));
+                $$ = novoNoAtrib($1, $3);
+                $$->tipo = T_ERRO;
+            } else {
+                $$ = novoNoAtrib($1, $3);
+            }
+        }
     }
     ;
 
@@ -132,10 +151,22 @@ if_statement:
 
 function_definition:
     DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite {
-        NoAST* func_name = novoNoId($2, T_INT);
+        inserirFuncao($2, T_VOID);  // Por padrão, funções retornam void
+        NoAST* func_name = novoNoId($2, T_FUNC);
         NoAST* func_params = $4;
         NoAST* func_body = $7;
+        
+        // Verificar tipo de retorno na função
+        Tipo tipoRetorno = verificarTipoRetorno(func_body);
+        if (tipoRetorno != T_VOID) {
+            Simbolo *s = buscarSimbolo($2);
+            if (s) {
+                s->info.funcao.tipoRetorno = tipoRetorno;
+            }
+        }
+        
         $$ = novoNoOp('F', novoNoOp('P', func_name, func_params), func_body);
+        finalizarEscopo(); // Fecha o escopo da função
     }
     ;
 
@@ -150,15 +181,17 @@ parameter_list:
 parameter:
     IDENTIFIER {
         $$ = novoNoId($1, T_INT);
+        adicionarParametro($<strValue>-1, $1, T_INT); // Adiciona o parâmetro à função atual
     }
     | IDENTIFIER ASSIGNMENT expr {
         $$ = novoNoOp('=', novoNoId($1, T_INT), $3);
+        adicionarParametro($<strValue>-3, $1, T_INT); // Adiciona o parâmetro com valor padrão
     }
     ;
 
 return_statement:
-    RETDEF
-    | RETDEF expr
+    RETDEF            { $$ = novoNoOp('R', NULL, NULL); } // R para return vazio
+    | RETDEF expr     { $$ = novoNoOp('R', $2, NULL); }   // R para return com expressão
     ;
 
 function_call:
@@ -178,8 +211,8 @@ argument_list:
 
 // Expressões aritméticas e lógicas
 expr:
-    expr OR expr        { $$ = novoNoOp('||', $1, $3); }
-  | expr AND expr       { $$ = novoNoOp('&&', $1, $3); }
+    expr OR expr        { $$ = novoNoOp('o', $1, $3); }  // 'o' para OR
+  | expr AND expr       { $$ = novoNoOp('a', $1, $3); }  // 'a' para AND
   | NOT expr            { $$ = novoNoOp('!', $2, NULL); }
   | expr EQUALS expr    { $$ = novoNoOp('=', $1, $3); }
   | expr DIFFROM expr   { $$ = novoNoOp('!=', $1, $3); }
@@ -187,7 +220,13 @@ expr:
   | expr LESS expr      { $$ = novoNoOp('<', $1, $3); }
   | expr GTOREQUAL expr { $$ = novoNoOp('>=', $1, $3); }  // g para >=
   | expr LSOREQUAL expr { $$ = novoNoOp('<=', $1, $3); }  // l para <=
-  | expr PLUS expr      { $$ = novoNoOp('+', $1, $3); }
+  | expr PLUS expr      { 
+        // Verificar compatibilidade de tipos
+        if ($1->tipo != $3->tipo) {
+            yyerror("Tipos incompatíveis na operação");
+        }
+        $$ = novoNoOp('+', $1, $3);
+    }
   | expr MINUS expr     { $$ = novoNoOp('-', $1, $3); }
   | expr TIMES expr     { $$ = novoNoOp('*', $1, $3); }
   | expr DIVIDE expr    { $$ = novoNoOp('/', $1, $3); }
@@ -196,7 +235,13 @@ expr:
   | LPAREN expr RPAREN  { $$ = $2; }
   | INT                 { $$ = novoNoNum($1); }
   | FLOAT               { $$ = novoNoNum((int)$1); }  // Temporário até implementar float
-  | IDENTIFIER          { $$ = novoNoId($1, T_INT); }
+  | IDENTIFIER          { 
+        Simbolo *s = buscarSimbolo($1);
+        if (s == NULL) {
+            yyerror("Variável não declarada");
+        }
+        $$ = novoNoId($1, s ? s->tipo : T_ERROR);
+    }
   | MINUS expr %prec UMINUS { $$ = novoNoOp('-', novoNoNum(0), $2); }
   | function_call       { $$ = $1; }
   ;
