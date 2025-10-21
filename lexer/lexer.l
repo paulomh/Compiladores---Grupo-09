@@ -1,21 +1,21 @@
 %x INDENT_STATE
 %option yylineno
 %{
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include "src/ast.h"
+#include "src/tabela.h"
+#include "parser.tab.h"
+#define MAX 100
+#undef YY_DECL
+#define YY_DECL int lex_engine(void)
+
 static char* copyString(const char* s) {
     char* str = malloc(strlen(s) + 1);
     strcpy(str, s);
     return str;
 }
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include "src/ast.h"
-#include "parser/parser.tab.h"
-#include "src/ast.h"
-#include "src/tabela.h"
-#define MAX 100
-#undef YY_DECL
-#define YY_DECL int lex_engine(void)
 
 int lex_engine(void);
 void yyerror(const char *s);
