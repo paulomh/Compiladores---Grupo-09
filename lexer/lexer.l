@@ -1,14 +1,21 @@
 %x INDENT_STATE
+%option yylineno
 %{
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "parser.tab.h"
 #include "src/ast.h"
 #include "src/tabela.h"
+#include "parser.tab.h"
 #define MAX 100
 #undef YY_DECL
 #define YY_DECL int lex_engine(void)
+
+static char* copyString(const char* s) {
+    char* str = malloc(strlen(s) + 1);
+    strcpy(str, s);
+    return str;
+}
 
 int lex_engine(void);
 void yyerror(const char *s);
@@ -109,22 +116,27 @@ int yylex(void) {
 
 [-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
-\"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
+\"[^\"]*\"|\'[^\']*\' { yylval.strValue = copyString(yytext); return STRING; }
 
-"if"            {  printf("[LEXER] -> IF\n "); return IF; }
-"else"          {  printf("[LEXER] -> ELSE\n "); return ELSE; }
-"while"         { return WHILE; }
-"for"           { return FOR; }
-"and"           { return AND; }
-"or"            { return OR; }
-"not"           { return NOT; }
-"is"            { return IS; }
-"in"            { return IN; }
-"pass"          { return PASS; }
-"def"           { return DEF; }
-"return"        { return RETDEF; }
-
-[a-zA-Z_][a-zA-Z0-9_]* { yylval.strValue = strdup(yytext); return IDENTIFIER; }
+[a-zA-Z_][a-zA-Z0-9_]* { 
+    if (strcmp(yytext, "if") == 0) { printf("[LEXER] Linha %d -> IF\n", yylineno); return IF; }
+    else if (strcmp(yytext, "else") == 0) { printf("[LEXER] Linha %d -> ELSE\n", yylineno); return ELSE; }
+    else if (strcmp(yytext, "while") == 0) return WHILE;
+    else if (strcmp(yytext, "for") == 0) return FOR;
+    else if (strcmp(yytext, "and") == 0) return AND;
+    else if (strcmp(yytext, "or") == 0) return OR;
+    else if (strcmp(yytext, "not") == 0) return NOT;
+    else if (strcmp(yytext, "is") == 0) return IS;
+    else if (strcmp(yytext, "in") == 0) return IN;
+    else if (strcmp(yytext, "pass") == 0) return PASS;
+    else if (strcmp(yytext, "def") == 0) return DEF;
+    else if (strcmp(yytext, "return") == 0) return RETDEF;
+    else {
+        yylval.strValue = copyString(yytext); 
+        printf("[LEXER] -> IDENTIFIER: %s\n", yytext);
+        return IDENTIFIER;
+    }
+}
 
 "=="            { return EQUALS; }
 "!="            { return DIFFROM; }

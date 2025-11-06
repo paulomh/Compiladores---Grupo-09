@@ -102,4 +102,3 @@ src/tabela.o: src/tabela.c src/tabela.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .PHONY: all clean run test example run-example help
-
