@@ -3,59 +3,118 @@
 #include <string.h>
 #include "ast.h"
 
+
+static void indent(int d) {
+    for (int i = 0; i < d; i++) fputs("  ", stdout);
+}
+
+static const char* tipo_str(Tipo t) {
+    switch (t) {
+        case T_INT:  return "T_INT";
+        case T_ERRO: return "T_ERRO";
+        default:     return "T_DESCONHECIDO";
+    }
+}
+
+// Evita ler lixo em nome quando não for ID
+static int tem_nome(const NoAST *n) {
+    return n && n->nome[0] != '\0';
+}
+
+
 NoAST *novoNoOp(char op, NoAST *esq, NoAST *dir)
 {
     NoAST *no = malloc(sizeof(NoAST));
-    no->op = op;
-    no->esq = esq;
-    no->dir = dir;
-    no->tipo = (esq->tipo == dir->tipo) ? esq->tipo : T_ERRO;
-
+    if (!no) { perror("malloc"); exit(1); }
+    no->op   = op;
+    no->esq  = esq;
+    no->dir  = dir;
+    no->val  = 0;
+    no->nome[0] = '\0';
+    no->tipo = (esq && dir && esq->tipo == dir->tipo) ? esq->tipo : T_ERRO;
     return no;
 }
 
 NoAST *novoNoNum(int val)
 {
     NoAST *no = malloc(sizeof(NoAST));
-    no->val = val;
-    no->op = 0;
+    if (!no) { perror("malloc"); exit(1); }
+    no->val  = val;
+    no->op   = 0;
+    no->esq  = NULL;
+    no->dir  = NULL;
+    no->nome[0] = '\0';
     no->tipo = T_INT;
-    no->esq = no->dir = NULL;
-
     return no;
 }
 
 NoAST *novoNoId(char *nome, Tipo tipo)
 {
     NoAST *no = malloc(sizeof(NoAST));
-    strcpy(no->nome, nome);
-    no->op = 0;
+    if (!no) { perror("malloc"); exit(1); }
+    no->op   = 0;
+    no->esq  = NULL;
+    no->dir  = NULL;
+    no->val  = 0;
+    no->nome[0] = '\0';
+    if (nome) {
+        strncpy(no->nome, nome, sizeof(no->nome) - 1);
+        no->nome[sizeof(no->nome) - 1] = '\0';
+    }
     no->tipo = tipo;
-    no->esq = no->dir = NULL;
-
     return no;
 }
 
+
 void imprimirAST(NoAST *no)
 {
-    if (no == NULL)
-        return;
-    if (no->op)
-    {
-        printf("(");
-        imprimirAST(no->esq);
+    if (no == NULL) return;
+
+    if (no->op) {
+        // operador: imprime (esq op dir) ou (op dir) se unário à direita
+        putchar('(');
+        if (no->esq) imprimirAST(no->esq);
         printf(" %c ", no->op);
-        imprimirAST(no->dir);
-        printf(")");
+        if (no->dir) imprimirAST(no->dir);
+        putchar(')');
     }
-    else if (strlen(no->nome) > 0)
-    {
+    else if (tem_nome(no)) {
         printf("%s", no->nome);
     }
-    else
-    {
+    else {
         printf("%d", no->val);
     }
+}
+
+
+// Impressão rica: mostra a estrutura em árvore com tipos e valores
+static void imprimirAST_node(const NoAST *no, int depth)
+{
+    if (!no) {
+        indent(depth); puts("(null)");
+        return;
+    }
+
+    indent(depth);
+    if (no->op) {
+        if (no->dir) {
+            printf("BINOP '%c' : %s\n", no->op, tipo_str(no->tipo));
+        } else {
+            printf("UNOP '%c' : %s\n", no->op, tipo_str(no->tipo));
+        }
+    } else if (tem_nome(no)) {
+        printf("ID \"%s\" : %s\n", no->nome, tipo_str(no->tipo));
+    } else {
+        printf("NUM %d : %s\n", no->val, tipo_str(no->tipo));
+    }
+
+    if (no->esq) imprimirAST_node(no->esq, depth + 1);
+    if (no->dir) imprimirAST_node(no->dir, depth + 1);
+}
+
+void imprimirAST_formatada(const NoAST *raiz)
+{
+    imprimirAST_node(raiz, 0);
 }
 
 int tiposCompativeis(Tipo t1, Tipo t2) {
