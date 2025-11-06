@@ -21,6 +21,32 @@ int lex_engine(void);
 void yyerror(const char *s);
 int yylex(void);
 
+/*
+ * regra <<EOF>> faz `return yylex()` que pode
+ * causar recursão infinita.
+ * 
+ * <<EOF>> {
+ *     if (eof_flag) {
+ *         return 0;
+ *     }
+ * 
+ *     eof_flag = 1;
+ *     while (stack_peek(s) > 0) {
+ *         stack_pop(s);
+ *         dedent_line++;
+ *     }
+ * 
+ *     // MUDANÇA CRÍTICA: Não chamar yylex() recursivamente
+ *     if (dedent_line > 0) {
+ *         // Deixa yylex() processar os DEDENTs na próxima chamada
+ *         printf("[LEXER] -> EOF com %d DEDENTs pendentes\n", dedent_line);
+ *         return 0; // Retorna 0 para indicar EOF, mas yylex() processará DEDENTs
+ *     }
+ * 
+ *     printf("[LEXER] -> END_OF_FILE\n");
+ *     return END_OF_FILE;
+ * }
+ * 
 
 typedef struct stack 
 {
@@ -197,6 +223,7 @@ int yylex(void) {
 }
 
 <<EOF>> {
+    
     if (eof_flag) {
         return 0;
     }
@@ -207,7 +234,7 @@ int yylex(void) {
         dedent_line++;
     }
 
-    return yylex();
+    return yylex(); // <- ESTA LINHA CAUSA O LOOP INFINITO
 }
 
 

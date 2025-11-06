@@ -19,6 +19,11 @@ extern stack *stack_init();
 int yylex(void);
 void yyerror(const char *s);
 
+// Variáveis do lexer para rastreamento de erros
+extern int line_num;
+extern char *yytext;
+extern int yychar;
+
 // Função para imprimir resultado da expressão
 void print_result(int value) {
     printf("Resultado: %d\n", value);
@@ -250,7 +255,15 @@ expr:
 
 // Função para tratamento de erros
 void yyerror(const char *s) {
-    printf("Erro de sintaxe: %s\n", s);
+    const char *token_text = (yytext && yytext[0]) ? yytext : "EOF";
+    int report_line = line_num;
+    
+    // Ajuste para newlines
+    if (yychar == NEWLINE && yytext && yytext[0] == '\n') {
+        if (report_line > 1) report_line -= 1;
+    }
+    
+    fprintf(stderr, "Erro de sintaxe na linha %d: %s (perto de '%s')\n", report_line, s, token_text);
 }
 
 // Função de inicialização
