@@ -17,6 +17,11 @@ extern stack *stack_init();
 int yylex(void);
 void yyerror(const char *s);
 
+// Variáveis do lexer para rastreamento de erros
+extern int line_num;
+extern char *yytext;
+extern int yychar;
+
 // Função para imprimir resultado da expressão
 void print_result(int value) {
     printf("Resultado: %d\n", value);
@@ -76,12 +81,14 @@ statement:
     NEWLINE
     | simple_statement NEWLINE
     | compound_statement
+    | error NEWLINE { printf("Erro de sintaxe na linha %d: declaração inválida\n", line_num); yyerrok; }
     ;
 
 simple_statement:
     expr { print_result($1); }
     | return_statement
     | assignment_statement
+    | error { printf("Erro de sintaxe na linha %d: declaração simples inválida\n", line_num); yyerrok; }
     ;
 
 assignment_statement:
@@ -101,6 +108,8 @@ suite:
 if_statement:
     IF expr COLON suite
     | IF expr COLON suite ELSE COLON suite
+    | IF error COLON suite { printf("Erro de sintaxe na linha %d: condição do 'if' inválida\n", line_num); yyerrok; }
+    | IF expr COLON error { printf("Erro de sintaxe na linha %d: bloco do 'if' inválido\n", line_num); yyerrok; }
     ;
 
 function_definition:
@@ -164,7 +173,15 @@ expr:
 
 // Função para tratamento de erros
 void yyerror(const char *s) {
-    printf("Erro de sintaxe: %s\n", s);
+    const char *token_text = (yytext && yytext[0]) ? yytext : "EOF";
+    int report_line = line_num;
+    
+    // Ajuste para newlines
+    if (yychar == NEWLINE && yytext && yytext[0] == '\n') {
+        if (report_line > 1) report_line -= 1;
+    }
+    
+    fprintf(stderr, "Erro de sintaxe na linha %d: %s (perto de '%s')\n", report_line, s, token_text);
 }
 
 // Função de inicialização
