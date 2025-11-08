@@ -46,7 +46,7 @@ int yylex(void);
  *     printf("[LEXER] -> END_OF_FILE\n");
  *     return END_OF_FILE;
  * }
- * 
+ */
 
 typedef struct stack 
 {

@@ -20,7 +20,6 @@ int yylex(void);
 void yyerror(const char *s);
 
 // Variáveis do lexer para rastreamento de erros
-extern int line_num;
 extern char *yytext;
 extern int yychar;
 
@@ -216,15 +215,15 @@ argument_list:
 
 // Expressões aritméticas e lógicas
 expr:
-    expr OR expr        { $$ = novoNoOp('o', $1, $3); }  // 'o' para OR
-  | expr AND expr       { $$ = novoNoOp('a', $1, $3); }  // 'a' para AND
+    expr OR expr        { $$ = novoNoOp('|', $1, $3); }  // | para OR
+  | expr AND expr       { $$ = novoNoOp('&', $1, $3); }  // & para AND
   | NOT expr            { $$ = novoNoOp('!', $2, NULL); }
-  | expr EQUALS expr    { $$ = novoNoOp('=', $1, $3); }
-  | expr DIFFROM expr   { $$ = novoNoOp('!=', $1, $3); }
+  | expr EQUALS expr    { $$ = novoNoOp('e', $1, $3); }  // e para ==
+  | expr DIFFROM expr   { $$ = novoNoOp('d', $1, $3); }  // d para !=
   | expr GREATER expr   { $$ = novoNoOp('>', $1, $3); }
   | expr LESS expr      { $$ = novoNoOp('<', $1, $3); }
-  | expr GTOREQUAL expr { $$ = novoNoOp('>=', $1, $3); }  // g para >=
-  | expr LSOREQUAL expr { $$ = novoNoOp('<=', $1, $3); }  // l para <=
+  | expr GTOREQUAL expr { $$ = novoNoOp('g', $1, $3); }  // g para >=
+  | expr LSOREQUAL expr { $$ = novoNoOp('l', $1, $3); }  // l para <=
   | expr PLUS expr      { 
         // Verificar compatibilidade de tipos
         if ($1->tipo != $3->tipo) {
@@ -256,7 +255,7 @@ expr:
 // Função para tratamento de erros
 void yyerror(const char *s) {
     const char *token_text = (yytext && yytext[0]) ? yytext : "EOF";
-    int report_line = line_num;
+    int report_line = yylineno;
     
     // Ajuste para newlines
     if (yychar == NEWLINE && yytext && yytext[0] == '\n') {
