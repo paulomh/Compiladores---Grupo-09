@@ -40,27 +40,9 @@ Este projeto implementa um **compilador funcional para subconjunto Python** com 
 
 ## Documentação Disponível
 
-- **[Características Técnicas](Caracteristicas%20Tecnicas.md)**: Especificações técnicas detalhadas da implementação
-- **[Configuração do Ambiente](Configuracao%20Ambiente.md)**: Guia completo de setup e instalação  
+- **[Características Técnicas](Docs/Caracteristicas%20Tecnicas.md)**: Especificações técnicas detalhadas da implementação
+- **[Configuração do Ambiente](Docs/Configuracao%20Ambiente.md)**: Guia completo de setup e instalação  
 - **[Guia de Contribuição](CONTRIBUTING.md)**: Workflow e padrões de desenvolvimento específicos para compiladores
-
-## Status do Projeto
-
-### Atual: 
-- [x] Formação da equipe e organização inicial
-- [x] Configuração do ambiente de desenvolvimento
-- [x] Definição da linguagem-fonte (subconjunto Python)
-- [x] Elaboração da gramática formal Python
-- [x] Implementação do analisador léxico
-- [x] Implementação do analisador sintático
-- [x] Sistema de gerenciamento de indentação
-- [x] Avaliação de expressões aritméticas
-
-### Próximas Etapas
-- Análise semântica (tabela de símbolos, verificação de tipos)
-- Geração de código intermediário e execução de variáveis
-- Suporte a funções e otimizações básicas
-- Documentação completa
 
 ### Componentes Implementados
 
@@ -89,24 +71,6 @@ Este projeto implementa um **compilador funcional para subconjunto Python** com 
   - Suporte a entrada via arquivo ou stdin  
   - Inicialização do compilador
   - Tratamento de erros básico
-
-## Funcionalidades vs. Limitações
-
-### **O que FUNCIONA**
-- Reconhecimento completo de tokens Python
-- Parsing de estruturas de controle (if/else, def, while, for)
-- Avaliação de expressões aritméticas complexas
-- Operadores lógicos (and, or, not)
-- Gerenciamento de indentação Python (INDENT/DEDENT)
-- Sistema de testes
-- Tratamento de comentários (linha única e múltiplas linhas)
-
-### **Limitações Atuais**
-- **Variáveis**: Não armazena/recupera valores de variáveis
-- **Funções**: Apenas parsing, sem execução real
-- **Loops**: Reconhece sintaxe mas não executa iterações  
-- **Tipos**: Conversão limitada (float → int)
-- **Escopo**: Sem tabela de símbolos implementada
 
 ## Como Contribuir
 
