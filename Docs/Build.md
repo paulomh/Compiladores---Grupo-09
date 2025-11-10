@@ -78,9 +78,11 @@ gcc -Wall -Wextra -std=c99 -c src/main.c -o src/main.o
 gcc -Wall -Wextra -std=c99 -o compilador lex.yy.o parser.tab.o src/main.o -lfl
 ```
 
-### `testes.sh` - Suite de Testes
+### Scripts de Teste (tests/)
 
-O script executa 8 categorias de testes:
+- `tests/run_all_tests.sh`: executa a suíte completa de testes.
+- `tests/scripts/testes.sh`: baterias auxiliares de testes.
+- Consulte `tests/README.md` para instruções detalhadas dos cenários.
 
 1. **Operações Básicas**
 2. **Precedência de Operadores**
@@ -184,7 +186,7 @@ make --debug=basic
 make clean && make && make test
 
 # Compilar e executar com arquivo
-make && ./compilador teste.py
+make && ./compilador tests/files/04_expressions_only.py
 
 # Compilar e testar expressão
 make && echo "3 + 4 * 2" | ./compilador
