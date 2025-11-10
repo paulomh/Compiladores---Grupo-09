@@ -1,5 +1,51 @@
 # Configuração do Ambiente de Desenvolvimento
 
+## Sumário
+
+- [Visão Geral](#visão-geral)
+- [Pré-requisitos](#pré-requisitos)
+  - [Sistemas Operacionais Suportados](#sistemas-operacionais-suportados)
+  - [Ferramentas Essenciais](#ferramentas-essenciais)
+- [Instalação no Linux (Ubuntu/Debian)](#instalação-no-linux-ubuntudebian)
+  - [Método Automatizado (Recomendado)](#método-automatizado-recomendado)
+  - [Instalação Manual](#instalação-manual)
+- [Instalação no macOS](#instalação-no-macos)
+  - [Usando Homebrew (Recomendado)](#usando-homebrew-recomendado)
+  - [Usando MacPorts](#usando-macports)
+- [Instalação no Windows (WSL2)](#instalação-no-windows-wsl2)
+  - [Configuração Inicial do WSL2](#configuração-inicial-do-wsl2)
+  - [Configuração do Ambiente no WSL2](#configuração-do-ambiente-no-wsl2)
+- [Configuração do Projeto](#configuração-do-projeto)
+  - [Clonando o Repositório](#clonando-o-repositório)
+  - [Estrutura de Diretórios](#estrutura-de-diretórios)
+- [Compilação e Build](#compilação-e-build)
+  - [Usando Make (Recomendado)](#usando-make-recomendado)
+  - [Usando Scripts](#usando-scripts)
+  - [Compilação Manual (Para Debug)](#compilação-manual-para-debug)
+- [Execução e Testes](#execução-e-testes)
+  - [Execução Básica](#execução-básica)
+  - [Testes Automatizados](#testes-automatizados)
+  - [Testes Manuais](#testes-manuais)
+- [Ferramentas de Desenvolvimento](#ferramentas-de-desenvolvimento)
+  - [IDEs e Editores Recomendados](#ides-e-editores-recomendados)
+  - [Debugging](#debugging)
+  - [Profiling](#profiling)
+- [Verificação da Instalação](#verificação-da-instalação)
+  - [Script de Verificação Completa](#script-de-verificação-completa)
+  - [Executar Verificação](#executar-verificação)
+- [Solução de Problemas](#solução-de-problemas)
+  - [Problemas Comuns de Instalação](#problemas-comuns-de-instalação)
+  - [Problemas de Compilação](#problemas-de-compilação)
+  - [Problemas no WSL2](#problemas-no-wsl2)
+  - [Problemas no macOS](#problemas-no-macos)
+  - [Problemas de Versionamento](#problemas-de-versionamento)
+- [Suporte e Ajuda](#suporte-e-ajuda)
+  - [Canais de Comunicação](#canais-de-comunicação)
+  - [Recursos Adicionais](#recursos-adicionais)
+  - [Logs de Debug](#logs-de-debug)
+
+---
+
 ## Visão Geral
 
 Este documento fornece instruções completas para configurar o ambiente de desenvolvimento necessário para o projeto do compilador. Seguindo estas instruções, você terá todas as ferramentas necessárias para compilar, testar e desenvolver o compilador do **Grupo 09**.
