@@ -2,6 +2,8 @@
 
 Este guia apresenta etapas para a implementação prática de um compilador.
 
+> Autoria: Prof. Sérgio Freitas — referência original no repositório indicado acima.
+
 ## 1. Definir a linguagem-fonte
 - Descrever a sintaxe e a semântica básica da linguagem.
 - Elaborar a gramática formal (por exemplo, gramática livre de contexto).
@@ -182,3 +184,10 @@ Este guia apresenta etapas para a implementação prática de um compilador.
 6. Não se esqueçam de manter **folga no cronograma** para lidar com imprevistos (bugs complexos, prazos de outras disciplinas, feriados e eventos).  
 
 Esse planejamento é apenas um **exemplo** — cada equipe pode ajustá-lo conforme seu ritmo, desde que respeitem os marcos (P1, P2, entregas finais e entrevistas). O importante é manter a transparência e o comprometimento com as entregas, sempre priorizando a qualidade e a compreensão de cada parte do compilador.
+
+---
+
+<div align="center">
+  <strong>Projeto de um compilador - Sergio Freitas</strong><br>
+  <sub>Compiladores 1 - UnB/2025.2</sub>
+</div>
