@@ -13,6 +13,8 @@ static const char* tipo_str(Tipo t) {
         case T_INT:   return "T_INT";
         case T_FLOAT: return "T_FLOAT";
         case T_ERRO:  return "T_ERRO";
+        case T_VOID:  return "T_VOID";
+        case T_FUNC:  return "T_FUNC";
         default:      return "T_DESCONHECIDO";
     }
 }
@@ -120,4 +122,37 @@ void imprimirAST_formatada(const NoAST *raiz)
 
 int tiposCompativeis(Tipo t1, Tipo t2) {
     return t1 == t2;
+}
+
+// Compat: exposição de string de tipo para o parser
+const char* getTipoString(Tipo t) {
+    return tipo_str(t);
+}
+
+// Nó de atribuição: nome = expr
+NoAST *novoNoAtrib(char *nome, NoAST *expr)
+{
+    NoAST *no = malloc(sizeof(NoAST));
+    if (!no) return NULL;
+    no->op = '=';
+    no->val = 0;
+    no->nome[0] = '\0';
+    if (nome) {
+        // copia o identificador para o nó e libera a string do parser
+        strncpy(no->nome, nome, sizeof(no->nome) - 1);
+        no->nome[sizeof(no->nome) - 1] = '\0';
+        free(nome);
+    }
+    no->esq = expr;   // expressão atribuída
+    no->dir = NULL;
+    no->tipo = expr ? expr->tipo : T_ERRO;
+    return no;
+}
+
+// Verificação simples do tipo de retorno de função (stub)
+Tipo verificarTipoRetorno(const NoAST *func_body)
+{
+    // Implementação mínima: se não há corpo, VOID; caso exista, assume o tipo do nó
+    if (!func_body) return T_VOID;
+    return func_body->tipo ? func_body->tipo : T_VOID;
 }

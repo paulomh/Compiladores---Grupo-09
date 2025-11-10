@@ -253,7 +253,7 @@ expr:
         if (s == NULL) {
             yyerror("Variável não declarada");
         }
-        $$ = novoNoId($1, s ? s->tipo : T_ERROR);
+        $$ = novoNoId($1, s ? s->tipo : T_ERRO);
     }
   | MINUS expr %prec UMINUS { $$ = novoNoOp('-', novoNoNum(0), $2); }
   | function_call       { $$ = $1; }
