@@ -1,5 +1,22 @@
 # Especificações Técnicas do Compilador Python
 
+## Sumário
+
+- [Visão Geral](#visão-geral)
+- [Arquitetura Implementada](#arquitetura-implementada)
+- [Estrutura Real do Projeto](#estrutura-real-do-projeto)
+- [Sistema de Build](#sistema-de-build)
+  - [Makefile](#makefile)
+  - [Comandos Disponíveis](#comandos-disponíveis)
+- [Sistema de Testes](#sistema-de-testes)
+  - [Scripts de Teste](#scripts-de-teste)
+- [Como Usar](#como-usar)
+  - [Compilação](#compilação)
+  - [Execução](#execução)
+  - [Testes](#testes)
+
+---
+
 ## Visão Geral
 
 Este documento descreve as especificações técnicas do compilador Python desenvolvido pelo **Grupo 09** para a disciplina de Compiladores 1. O compilador implementa um subconjunto funcional da linguagem Python com foco em expressões aritméticas, estruturas de controle e gerenciamento de indentação.
