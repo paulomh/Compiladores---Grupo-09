@@ -51,8 +51,14 @@ run_error_test() {
     
     # Verificar se houve erro (exit code != 0 ou mensagem de erro)
     if [ $exit_code -ne 0 ] || echo "$output" | grep -q -E "(Erro|erro|ERROR|Invalid|Caractere invalido|syntax error)" >/dev/null 2>&1; then
-        echo "✅ PASSOU (Erro detectado corretamente)"
-        PASSED_TESTS=$((PASSED_TESTS + 1))
+        # Checar se há indicação de linha (yylineno)
+        if echo "$output" | grep -q -E "(linha|line)[[:space:]]*[0-9]+" >/dev/null 2>&1; then
+            echo "✅ PASSOU (Erro com indicação de linha)"
+            PASSED_TESTS=$((PASSED_TESTS + 1))
+        else
+            echo "❌ FALHOU (Erro sem indicação de linha)"
+            FAILED_TESTS=$((FAILED_TESTS + 1))
+        fi
     else
         echo "❌ FALHOU (Deveria ter dado erro, mas passou)"
         FAILED_TESTS=$((FAILED_TESTS + 1))

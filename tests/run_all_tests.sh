@@ -41,14 +41,26 @@ else
 fi
 
 echo
+echo "📚 EXECUTANDO TESTES DA TABELA DE SÍMBOLOS/ESCOPO/TIPOS..."
+echo "=========================================================="
+if [ -f "tests/scripts/test_symbol_table.sh" ]; then
+    ./tests/scripts/test_symbol_table.sh
+    symbols_result=$?
+else
+    echo "❌ Script de testes da tabela de símbolos não encontrado!"
+    symbols_result=1
+fi
+
+echo
 echo "=========================================="
 echo "       RELATÓRIO FINAL GERAL"
 echo "=========================================="
 
-if [ $inline_result -eq 0 ] && [ $files_result -eq 0 ]; then
+if [ $inline_result -eq 0 ] && [ $files_result -eq 0 ] && [ $symbols_result -eq 0 ]; then
     echo "🎉 TODOS OS TESTES PASSARAM! 🎉"
     echo "✅ Testes inline: SUCESSO"
     echo "✅ Testes de arquivos: SUCESSO"
+    echo "✅ Testes de símbolos/escopo/tipos: SUCESSO"
     echo ""
     echo "O compilador está funcionando perfeitamente!"
     exit 0
@@ -64,6 +76,11 @@ else
         echo "❌ Testes de arquivos: FALHOU"
     else
         echo "✅ Testes de arquivos: SUCESSO"
+    fi
+    if [ $symbols_result -ne 0 ]; then
+        echo "❌ Testes de símbolos/escopo/tipos: FALHOU"
+    else
+        echo "✅ Testes de símbolos/escopo/tipos: SUCESSO"
     fi
     echo ""
     echo "Verifique os relatórios acima para detalhes."
