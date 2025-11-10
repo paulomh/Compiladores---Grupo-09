@@ -47,8 +47,15 @@ run_file_test() {
     else
         # Teste deve falhar (arquivo de erro)
         if [ $exit_code -ne 0 ] || echo "$output" | grep -q -E "(Erro|erro|ERROR|syntax error)" >/dev/null 2>&1; then
-            echo "✅ PASSOU (Erro detectado corretamente)"
-            PASSED_TESTS=$((PASSED_TESTS + 1))
+            # Validar presença de número de linha na mensagem de erro
+            if echo "$output" | grep -q -E "(linha|line)[[:space:]]*[0-9]+" >/dev/null 2>&1; then
+                echo "✅ PASSOU (Erro com indicação de linha)"
+                PASSED_TESTS=$((PASSED_TESTS + 1))
+            else
+                echo "❌ FALHOU (Erro sem indicação de linha)"
+                echo "   Saída: $(echo "$output" | tail -1)"
+                FAILED_TESTS=$((FAILED_TESTS + 1))
+            fi
         else
             echo "❌ FALHOU (Deveria ter dado erro mas passou)"
             FAILED_TESTS=$((FAILED_TESTS + 1))
@@ -111,8 +118,11 @@ run_file_test "tests/files/error_03_unbalanced_parens.py" "Parênteses desbalanc
 run_file_test "tests/files/error_04_invalid_chars.py" "Caracteres inválidos" "error"
 echo
 
-echo "--- Teste 9: Arquivo Original ---"
-run_file_test "tests/files/teste.py" "Arquivo de exemplo original" "success"
+echo "--- Teste 9: Integração Tabela de Símbolos / Escopo / Tipos ---"
+run_file_test "tests/files/test_symbol_table.py" "Tabela de símbolos" "success"
+run_file_test "tests/files/test_escopo_tipos.py" "Escopo e tipos (erros esperados)" "error"
+run_file_test "tests/files/test_tipos_retorno.py" "Tipos de retorno (erros esperados)" "error"
+run_file_test "tests/files/test_ast_table.py" "Cenário AST básico" "success"
 echo
 
 echo "=========================================="

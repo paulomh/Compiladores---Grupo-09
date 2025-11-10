@@ -1,5 +1,34 @@
 # Sistema de Build - Compilador Python
 
+## Sumário
+
+- [Makefile Completo](#makefile-completo)
+  - [Comandos Principais](#comandos-principais)
+  - [Targets Detalhados](#targets-detalhados)
+  - [Arquivos Gerados](#arquivos-gerados)
+  - [Test Targets](#test-targets)
+- [Scripts Disponíveis](#scripts-disponíveis)
+  - [`compilar.sh` - Compilação Automática](#compilarsh---compilação-automática)
+  - [Scripts de Teste (tests/)](#scripts-de-teste-tests)
+- [Processo de Compilação](#processo-de-compilação)
+  - [Etapa 1: Análise Léxica](#etapa-1-análise-léxica)
+  - [Etapa 2: Análise Sintática](#etapa-2-análise-sintática)
+  - [Etapa 3: Compilação dos Objetos](#etapa-3-compilação-dos-objetos)
+  - [Etapa 4: Linkagem](#etapa-4-linkagem)
+- [Configurações do Makefile](#configurações-do-makefile)
+  - [Variáveis](#variáveis)
+  - [Dependências](#dependências)
+- [Debug e Troubleshooting](#debug-e-troubleshooting)
+  - [Verificar Conflitos do Parser](#verificar-conflitos-do-parser)
+  - [Compilação com Debug](#compilação-com-debug)
+  - [Verbose Mode](#verbose-mode)
+- [Comandos de Desenvolvimento](#comandos-de-desenvolvimento)
+  - [Desenvolvimento Rápido](#desenvolvimento-rápido)
+  - [Automação](#automação)
+- [Estrutura de Build](#estrutura-de-build)
+
+---
+
 ## Makefile Completo
 
 O projeto utiliza um Makefile profissional com múltiplos targets para facilitar o desenvolvimento e testes.
@@ -78,9 +107,11 @@ gcc -Wall -Wextra -std=c99 -c src/main.c -o src/main.o
 gcc -Wall -Wextra -std=c99 -o compilador lex.yy.o parser.tab.o src/main.o -lfl
 ```
 
-### `testes.sh` - Suite de Testes
+### Scripts de Teste (tests/)
 
-O script executa 8 categorias de testes:
+- `tests/run_all_tests.sh`: executa a suíte completa de testes.
+- `tests/scripts/testes.sh`: baterias auxiliares de testes.
+- Consulte `tests/README.md` para instruções detalhadas dos cenários.
 
 1. **Operações Básicas**
 2. **Precedência de Operadores**
@@ -184,7 +215,7 @@ make --debug=basic
 make clean && make && make test
 
 # Compilar e executar com arquivo
-make && ./compilador teste.py
+make && ./compilador tests/files/04_expressions_only.py
 
 # Compilar e testar expressão
 make && echo "3 + 4 * 2" | ./compilador
