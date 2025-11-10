@@ -5,11 +5,9 @@ typedef enum
 {
     T_INT,
     T_FLOAT,
-    T_FUNC,
-    T_VOID,
-    T_ERROR,
     T_ERRO,
-    T_VAZIO
+    T_VOID,   // adicionado p/ funções sem retorno
+    T_FUNC    // adicionado p/ identificar símbolos de função
 } Tipo;
 
 typedef struct noAST
@@ -18,18 +16,20 @@ typedef struct noAST
     int val;
     char nome[255];
     Tipo tipo;
-    int linha;  // Linha onde o nó foi criado
     struct noAST *esq;
     struct noAST *dir;
 } NoAST;
 
 NoAST *novoNoOp(char op, NoAST *esq, NoAST *dir);
-NoAST *novoNoNum(int valor);
-NoAST *novoNoId(char* nome, Tipo tipo);
-NoAST *novoNoAtrib(char* id, NoAST* expr);
+NoAST *novoNoNum(int val);
+NoAST *novoNoId(char *nome, Tipo tipo);
 void imprimirAST(NoAST *no);
+void imprimirAST_formatada(const NoAST *raiz); // Adicione esta linha
 int tiposCompativeis(Tipo t1, Tipo t2);
-const char* getTipoString(Tipo tipo);
-Tipo verificarTipoRetorno(NoAST *no);
+
+// Novas APIs usadas no parser
+NoAST *novoNoAtrib(char *nome, NoAST *expr);
+const char *getTipoString(Tipo t);
+Tipo verificarTipoRetorno(const NoAST *func_body);
 
 #endif

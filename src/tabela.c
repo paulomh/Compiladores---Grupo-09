@@ -20,7 +20,10 @@ unsigned hash(char *s)
 }
 
 void iniciarEscopo() {
-    pilhaEscopo[topoEscopo++] = topoEscopo;
+    /* Evitar comportamento indefinido ao usar topoEscopo++ e topoEscopo
+       na mesma expressão. Primeiro armazena o valor atual, depois incrementa. */
+    pilhaEscopo[topoEscopo] = topoEscopo;
+    topoEscopo++;
 }
 
 void finalizarEscopo() {
