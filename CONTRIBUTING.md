@@ -27,9 +27,8 @@ graph TD
     F --> G[Pull Request]
     G --> H[Code Review]
     H --> I{Review OK?}
-    I -->|Yes| J[Merge to Develop]
+    I -->|Yes| J[Merge to Main]
     I -->|No| C
-    J --> K[Deploy/Integration]
 ```
 
 ## Padrões de Commits
@@ -122,13 +121,11 @@ BREAKING CHANGE: A estrutura ASTNode agora requer campo type_info
 ### Git Flow
 
 ```
-main (código principal)
+main (código e documentação)
 ├── dev/lexer-strings
 ├── dev/parser-functions  
 ├── dev/semantic-types
-└── dev/memory-leak-fix
-
-docs (documentação principal)
+├── dev/memory-leak-fix
 ├── doc/grammar-specification
 ├── doc/api-documentation
 └── doc/user-manual
@@ -138,8 +135,7 @@ docs (documentação principal)
 
 | Branch | Propósito | Proteção | Merge |
 |--------|-----------|----------|-------|
-| **main** | Código principal do compilador | ✅ Protegida | Via PR aprovado |
-| **docs** | Documentação principal | ✅ Protegida | Via PR aprovado |
+| **main** | Código e documentação do compilador | ✅ Protegida | Via PR aprovado |
 
 ### Branches de Trabalho (Temporárias)
 
@@ -155,7 +151,7 @@ dev/codegen-expressions
 dev/memory-leak-fix
 dev/optimization-constant-folding
 
-# Documentação (partem de docs)
+# Documentação (partem de main)
 doc/<descrição/objetivo>
 doc/grammar-specification
 doc/api-documentation
@@ -198,8 +194,8 @@ git branch -d dev/lexer-scientific-numbers
 
 ```bash
 # 1. Criar branch de documentação
-git checkout docs
-git pull origin docs
+git checkout main
+git pull origin main
 git checkout -b doc/grammar-specification
 
 # 2. Atualizar documentação
@@ -207,17 +203,17 @@ git checkout -b doc/grammar-specification
 git add .
 git commit -m "docs: Adiciona especificação completa da gramática"
 
-# 3. Manter atualizado com docs
+# 3. Manter atualizado com main
 git fetch origin
-git rebase origin/docs
+git rebase origin/main
 
 # 4. Push e Pull Request
 git push origin doc/grammar-specification
-# Criar PR no GitHub: doc/grammar-specification → docs
+# Criar PR no GitHub: doc/grammar-specification → main
 
 # 5. Após merge, limpar branch local
-git checkout docs
-git pull origin docs
+git checkout main
+git pull origin main
 git branch -d doc/grammar-specification
 ```
 
@@ -239,7 +235,7 @@ git branch -d doc/grammar-specification
 
 3. **Merge**:
    - Squash commits se necessário
-   - Merge para main (código) ou docs (documentação)
+   - Merge para main (código e documentação)
    - Delete branch de trabalho
 
 
