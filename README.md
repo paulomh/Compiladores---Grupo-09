@@ -4,6 +4,19 @@
 [![Flex](https://img.shields.io/badge/flex-2.6+-green)](https://github.com/westes/flex)
 [![Bison](https://img.shields.io/badge/bison-3.8+-green)](https://www.gnu.org/software/bison/)
 
+## Sumário
+
+- [Visão Geral](#visão-geral)
+- [Funcionalidades Implementadas](#funcionalidades-implementadas)
+- [Equipe de Desenvolvimento](#equipe-de-desenvolvimento)
+- [Documentação Disponível](#documentação-disponível)
+- [Como Contribuir](#como-contribuir)
+- [Informações do Projeto](#informações-do-projeto)
+
+---
+
+## Visão Geral
+
 > Compilador para subconjunto Python desenvolvido para a disciplina **Compiladores 1** - UnB/2025.2
 
 Este projeto implementa um **compilador funcional para subconjunto Python** com foco em expressões aritméticas, estruturas de controle e gerenciamento completo de indentação Python. Atualmente suporta análise léxica e sintática completas com avaliação de expressões.
@@ -24,53 +37,11 @@ Este projeto implementa um **compilador funcional para subconjunto Python** com 
 | :-------------------------------------------------------: | :-------------------------------------------------------: | :----------------------------------------------------------: | :-------------------------------------------------------------: |
 | **[Jesse Eveline](https://github.com/xzxjesse)**<br/> | **[Ruan Carvalho](https://github.com/Ruan-Carvalho)**<br/>| **[Paulo Henrique](https://github.com/paulomh)**<br/> | **[Lucas Avelar](https://github.com/LucasAvelar2711)** |
 
-## Arquitetura Implementada
-
-```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│ Código Python   │──▶│ Análise Léxica   │───▶│   Tokens       │
-│    (.py)        │    │    (Flex)       │    │   + Indentação  │
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                                                        │
-                       ┌─────────────────┐    ┌─────────▼─────────┐
-                       │   Resultado     │◀───│ Análise Sintática│
-                       │  (Avaliação)    │    │    (Bison)        │
-                       └─────────────────┘    └───────────────────┘
-```
-
 ## Documentação Disponível
 
 - **[Características Técnicas](Docs/Caracteristicas%20Tecnicas.md)**: Especificações técnicas detalhadas da implementação
 - **[Configuração do Ambiente](Docs/Configuracao%20Ambiente.md)**: Guia completo de setup e instalação  
 - **[Guia de Contribuição](CONTRIBUTING.md)**: Workflow e padrões de desenvolvimento específicos para compiladores
-
-### Componentes Implementados
-
-#### **Analisador Léxico** (`lexer/lexer.l`)
-- **Ferramenta**: Flex
-- **Funcionalidades**: 
-  - Reconhecimento de tokens Python
-  - Gerenciamento de indentação (INDENT/DEDENT)
-  - Suporte a comentários (linha única e múltiplas linhas)
-  - Números inteiros e decimais com sinal
-  - Strings com aspas simples e duplas
-- **Tokens**: 46+ tipos diferentes
-
-#### **Analisador Sintático** (`parser/parser.y`)
-- **Ferramenta**: Bison
-- **Funcionalidades**:
-  - Gramática Python com precedência de operadores
-  - Estruturas de controle (if/else)
-  - Definições de função (def)
-  - Avaliação de expressões aritméticas e lógicas
-- **Ações Semânticas**: Cálculo direto de resultados
-
-#### **Programa Principal** (`src/main.c`)
-- **Funcionalidades**:
-  - Interface de linha de comando
-  - Suporte a entrada via arquivo ou stdin  
-  - Inicialização do compilador
-  - Tratamento de erros básico
 
 ## Como Contribuir
 
