@@ -1,5 +1,28 @@
 # Guia de Contribuição - Compilador Grupo 09
 
+## Sumário
+
+- [Introdução](#introdução)
+- [Workflow de Desenvolvimento](#workflow-de-desenvolvimento)
+  - [Metodologia Ágil - Scrum Adaptado](#metodologia-ágil---scrum-adaptado)
+  - [Fluxo de Trabalho](#fluxo-de-trabalho)
+- [Padrões de Commits](#padrões-de-commits)
+  - [Tipos de Commit Específicos para Compiladores](#tipos-de-commit-específicos-para-compiladores)
+  - [Formato dos Commits](#formato-dos-commits)
+  - [Exemplos Práticos](#exemplos-práticos)
+  - [Regras de Commit](#regras-de-commit)
+  - [Commits com Breaking Changes](#commits-com-breaking-changes)
+- [Estratégia de Branches](#estratégia-de-branches)
+  - [Git Flow](#git-flow)
+  - [Branches Principais](#branches-principais)
+  - [Branches de Trabalho (Temporárias)](#branches-de-trabalho-temporárias)
+  - [Fluxo de Branch](#fluxo-de-branch)
+- [Code Review](#code-review)
+  - [Processo de Revisão](#processo-de-revisão)
+  - [Template de Pull Request](#template-de-pull-request)
+
+---
+
 ## Introdução
 
 Este documento define as diretrizes completas para contribuição no projeto do compilador desenvolvido pelo **Grupo 09**. Seguindo estas práticas, garantimos qualidade, consistência e colaboração efetiva entre todos os membros da equipe.
