@@ -10,9 +10,10 @@ static void indent(int d) {
 
 static const char* tipo_str(Tipo t) {
     switch (t) {
-        case T_INT:  return "T_INT";
-        case T_ERRO: return "T_ERRO";
-        default:     return "T_DESCONHECIDO";
+        case T_INT:   return "T_INT";
+        case T_FLOAT: return "T_FLOAT";
+        case T_ERRO:  return "T_ERRO";
+        default:      return "T_DESCONHECIDO";
     }
 }
 
