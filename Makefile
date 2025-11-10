@@ -33,8 +33,8 @@ $(TARGET): $(OBJECTS)
 	$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) -lfl
 	@echo "✅ Compilador compilado com sucesso!"
 
-# Gerar arquivo C do lexer
-$(LEXER_C): $(LEXER_SRC)
+# Gerar arquivo C do lexer (depende do header do parser)
+$(LEXER_C): $(LEXER_SRC) $(PARSER_H)
 	$(LEX) $(LEXER_SRC)
 
 # Gerar arquivos C e H do parser
@@ -47,8 +47,8 @@ $(PARSER_C) $(PARSER_H): $(PARSER_SRC)
 
 # Limpar arquivos gerados
 clean:
-	rm -f $(LEXER_C) $(PARSER_C) $(PARSER_H) *.o src/*.o $(TARGET)
-	rm -f parser.output
+	@rm -f $(LEXER_C) $(PARSER_C) $(PARSER_H) *.o src/*.o $(TARGET) test_ast
+	@rm -f parser.output
 	@echo "🧹 Arquivos de compilação removidos"
 
 # Executar o compilador
@@ -101,4 +101,11 @@ src/ast.o: src/ast.c src/ast.h
 src/tabela.o: src/tabela.c src/tabela.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
-.PHONY: all clean run test example run-example help
+# === Teste isolado da AST ===
+test_ast: src/test_ast.c src/ast.c src/ast.h
+	$(CC) $(CFLAGS) -o test_ast src/test_ast.c src/ast.c
+
+run_test_ast: test_ast
+	./test_ast
+
+.PHONY: all clean run test example run-example help test_ast run_test_ast
