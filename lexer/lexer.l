@@ -7,6 +7,7 @@
 #include "src/ast.h"
 #include "src/tabela.h"
 #include "parser.tab.h"
+#define YY_USER_ACTION yylloc.first_line = yylloc.last_line = yylineno;
 #define MAX 100
 #undef YY_DECL
 #define YY_DECL int lex_engine(void)
@@ -94,11 +95,12 @@ int stack_peek(stack *s)
 
 stack *s;
 int dedent_line = 0;
-int eof_flag = 0, endF = 0;
+int eof_flag = 0, endF = 0, eof_newline_injected = 0;
 int newline_count = 0; // Contador global de "enters"
 
 int yylex(void) {
     if (dedent_line > 0) {
+        yylineno = dedent_line; // Apenas para depuração, pode ser removido
         dedent_line--;
         printf("[LEXER] -> DEDENT\n");
         return DEDENT;
@@ -223,20 +225,26 @@ int yylex(void) {
 }
 
 <<EOF>> {
-    
     if (eof_flag) {
         return 0;
     }
 
-    eof_flag = 1;
-    while (stack_peek(s) > 0) {
-        stack_pop(s);
-        dedent_line++;
+    if (yytext[0] != '\n' && !eof_newline_injected) {
+        eof_newline_injected = 1;
+        printf("[LEXER] -> Inserindo NEWLINE antes do EOF\n");
+        return NEWLINE;
     }
 
-    return yylex(); // <- ESTA LINHA CAUSA O LOOP INFINITO
-}
+    if (stack_peek(s) > 0) {
+        stack_pop(s);
+        printf("[LEXER] -> DEDENT (EOF)\n");
+        return DEDENT;
+    }
 
+    printf("[LEXER] -> END_OF_FILE\n");
+    eof_flag = 1;
+    return END_OF_FILE;
+}
 
 . { printf("Caractere invalido: %s\n", yytext); }
 %%

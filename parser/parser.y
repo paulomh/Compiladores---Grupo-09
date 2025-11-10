@@ -29,6 +29,9 @@ void print_result(int value) {
 }
 %}
 
+// Habilita o rastreamento de localização (define yylloc)
+%locations
+
 %union {
     int intValue;
     float floatValue;
@@ -56,6 +59,7 @@ void print_result(int value) {
 
 // Indentação
 %token INDENT DEDENT NEWLINE
+%token END_OF_FILE
 
 // Tipos das regras gramaticais
 %type <no> program
@@ -92,6 +96,11 @@ program:
         $$ = $1;
         printf("\n[SUCESSO!] AST construída com sucesso\n");
         imprimirAST($$);  // Imprimir a árvore para debug
+    }
+    | statement_list END_OF_FILE {
+        $$ = $1;
+        printf("\n[SUCESSO!] AST construída com sucesso (com EOF)\n");
+        imprimirAST($$);
     }
     ;
 
