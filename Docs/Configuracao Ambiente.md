@@ -31,18 +31,9 @@
   - [Debugging](#debugging)
   - [Profiling](#profiling)
 - [Verificação da Instalação](#verificação-da-instalação)
-  - [Script de Verificação Completa](#script-de-verificação-completa)
-  - [Executar Verificação](#executar-verificação)
 - [Solução de Problemas](#solução-de-problemas)
-  - [Problemas Comuns de Instalação](#problemas-comuns-de-instalação)
-  - [Problemas de Compilação](#problemas-de-compilação)
-  - [Problemas no WSL2](#problemas-no-wsl2)
-  - [Problemas no macOS](#problemas-no-macos)
-  - [Problemas de Versionamento](#problemas-de-versionamento)
 - [Suporte e Ajuda](#suporte-e-ajuda)
-  - [Canais de Comunicação](#canais-de-comunicação)
-  - [Recursos Adicionais](#recursos-adicionais)
-  - [Logs de Debug](#logs-de-debug)
+- [Referência Rápida](#referência-rápida)
 
 ---
 
@@ -220,48 +211,47 @@ mkdir -p {src/{lexer,parser,semantic,codegen},tests/{lexer,parser,semantic,integ
 # Compilar tudo
 make all
 
-# Compilar apenas o analisador léxico
-make lexer
-
-# Compilar apenas o analisador sintático
-make parser
-
 # Limpar arquivos gerados
 make clean
 
 # Recompilar tudo do zero
-make rebuild
+make clean && make
+
+# Compilar e testar
+make && bash tests/scripts/test_category_all.sh
 ```
 
 ### Usando Scripts
 
 ```bash
-# Script de build completo
-./scripts/build.sh
+# Script de compilação automática
+chmod +x compilar.sh
+./compilar.sh
 
-# Script de build com debug
-./scripts/build.sh --debug
-
-# Script de build para release
-./scripts/build.sh --release
+# Compilar e testar
+chmod +x compilar.sh
+./compilar.sh && bash tests/scripts/test_category_all.sh
 ```
 
 ### Compilação Manual (Para Debug)
 
 ```bash
 # 1. Gerar analisador léxico
-flex -o src/lexer/lex.yy.c src/lexer/lexer.l
+flex -o lex.yy.c lexer/lexer.l
 
 # 2. Gerar analisador sintático
-bison -d -v -o src/parser/parser.tab.c src/parser/parser.y
+bison -d -v -o parser.tab.c parser/parser.y
 
 # 3. Compilar componentes
-gcc -Wall -Wextra -std=c99 -g -c src/lexer/lex.yy.c -o build/lex.yy.o
-gcc -Wall -Wextra -std=c99 -g -c src/parser/parser.tab.c -o build/parser.tab.o
-gcc -Wall -Wextra -std=c99 -g -c src/main.c -o build/main.o
+gcc -Wall -Wextra -std=c99 -g -c lex.yy.c -o lex.yy.o
+gcc -Wall -Wextra -std=c99 -g -c parser.tab.c -o parser.tab.o
+gcc -Wall -Wextra -std=c99 -g -c src/main.c -o src/main.o
 
 # 4. Linkar executável
-gcc -Wall -Wextra -std=c99 -g -o bin/compilador build/*.o -lfl
+gcc -Wall -Wextra -std=c99 -g -o compilador lex.yy.o parser.tab.o src/main.o -lfl
+
+# 5. Testar
+./compilador tests/files/ast_binop.py
 ```
 
 ## Execução e Testes
@@ -270,48 +260,47 @@ gcc -Wall -Wextra -std=c99 -g -o bin/compilador build/*.o -lfl
 
 ```bash
 # Compilar um arquivo fonte
-./bin/compilador examples/exemplo.src
+./compilador tests/files/ast_binop.py
 
-# Executar com opções de debug
-./bin/compilador examples/exemplo.src --debug --tokens --ast
+# Com saída detalhada
+./compilador tests/files/ast_binop.py 2>&1
 
-# Executar com entrada interativa
-./bin/compilador --interactive
+# Pipe com entrada
+echo "x = 10 + 5" | ./compilador
+
+# Listar arquivos de teste disponíveis
+ls tests/files/
 ```
 
 ### Testes Automatizados
 
 ```bash
-# Executar todos os testes
-make test
+# Executar todos os testes (suíte completa)
+bash tests/scripts/test_category_all.sh
 
-# Testes por componente
-make test-lexer
-make test-parser
-make test-semantic
-make test-codegen
+# Testes por categoria
+bash tests/scripts/test_category_ast.sh
+bash tests/scripts/test_category_conditional.sh
+bash tests/scripts/test_category_error.sh
+bash tests/scripts/test_category_general.sh
+bash tests/scripts/test_category_symbol.sh
+bash tests/scripts/test_category_integration.sh
 
-# Testes de integração
-make test-integration
-
-# Testes com cobertura
-make coverage
+# Compilar e testar
+make clean && make && bash tests/scripts/test_category_all.sh
 ```
 
 ### Testes Manuais
 
 ```bash
-# Testar analisador léxico
-echo "int x = 42;" | ./bin/compilador --tokens
+# Testar arquivo específico
+./compilador tests/files/ast_binop.py
 
-# Testar analisador sintático
-echo "if (x > 0) { print(x); }" | ./bin/compilador --ast
+# Com saída detalhada
+./compilador tests/files/ast_binop.py 2>&1
 
-# Testar análise semântica
-./bin/compilador examples/semantic_test.src --semantic
-
-# Testar geração de código
-./bin/compilador examples/codegen_test.src --codegen
+# Pipe com entrada
+echo "x = 10 + 5" | ./compilador
 ```
 
 ## Ferramentas de Desenvolvimento
@@ -567,7 +556,57 @@ cat build.log | grep -i warning
 
 ---
 
+## Referência Rápida
+
+### Comandos Essenciais
+
+```bash
+# Setup inicial
+make clean && make
+
+# Testar
+bash tests/scripts/test_category_all.sh
+
+# Compilar e testar (ciclo completo)
+make clean && make && bash tests/scripts/test_category_all.sh
+
+# Testar categoria específica
+bash tests/scripts/test_category_ast.sh
+
+# Testar arquivo individual
+./compilador tests/files/ast_binop.py
+```
+
+### Estrutura de Diretórios
+
+```
+.
+├── lexer/lexer.l              # Análise léxica
+├── parser/parser.y            # Análise sintática
+├── src/
+│   ├── main.c
+│   ├── ast.c
+│   └── tabela.c
+├── tests/
+│   ├── files/                 # 45 arquivos de teste
+│   └── scripts/               # 7 scripts de teste
+├── Makefile
+└── compilador                 # Executável final
+```
+
+### Checklist de Instalação
+
+- [ ] Flex instalado (`flex --version`)
+- [ ] Bison instalado (`bison --version`)
+- [ ] GCC instalado (`gcc --version`)
+- [ ] Make instalado (`make --version`)
+- [ ] Projeto compilado (`make clean && make`)
+- [ ] Testes passando (`bash tests/scripts/test_category_all.sh`)
+
+---
+
 <div align="center">
   <strong>Configuração de Ambiente - Grupo 09</strong><br>
   <sub>Compiladores 1 - UnB/2025.2</sub>
 </div>
+

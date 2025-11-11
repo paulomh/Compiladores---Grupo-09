@@ -61,6 +61,6 @@ Consulte nosso [**Guia de Contribuição**](CONTRIBUTING.md) que inclui:
 ---
 
 <div align="center">
-  <strong>Compilador Python Funcional - Grupo 09</strong><br>
+  <strong>Grupo 09</strong><br>
   <sub>Universidade de Brasília - Compiladores 1 - 2025.2</sub><br><br>
 </div>

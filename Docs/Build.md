@@ -6,10 +6,9 @@
   - [Comandos Principais](#comandos-principais)
   - [Targets Detalhados](#targets-detalhados)
   - [Arquivos Gerados](#arquivos-gerados)
-  - [Test Targets](#test-targets)
 - [Scripts Disponíveis](#scripts-disponíveis)
   - [`compilar.sh` - Compilação Automática](#compilarsh---compilação-automática)
-  - [Scripts de Teste (tests/)](#scripts-de-teste-tests)
+  - [Scripts de Teste](#scripts-de-teste)
 - [Processo de Compilação](#processo-de-compilação)
   - [Etapa 1: Análise Léxica](#etapa-1-análise-léxica)
   - [Etapa 2: Análise Sintática](#etapa-2-análise-sintática)
@@ -79,14 +78,6 @@ make help
 | `*.o` | Arquivos objeto | `gcc -c` |
 | `compilador` | Executável final | `gcc -o` |
 
-### Test Targets
-
-| Target | Descrição | Exemplo |
-|--------|-----------|---------|
-| `test` | Teste básico com pipe | `echo "x = 10 + 5" \| ./compilador` |
-| `example` | Cria arquivo exemplo.txt | Arquivo com código Python |
-| `run-example` | Executa com arquivo exemplo | `./compilador exemplo.txt` |
-
 ## Scripts Disponíveis
 
 ### `compilar.sh` - Compilação Automática
@@ -107,20 +98,33 @@ gcc -Wall -Wextra -std=c99 -c src/main.c -o src/main.o
 gcc -Wall -Wextra -std=c99 -o compilador lex.yy.o parser.tab.o src/main.o -lfl
 ```
 
-### Scripts de Teste (tests/)
+### Scripts de Teste
 
-- `tests/run_all_tests.sh`: executa a suíte completa de testes.
-- `tests/scripts/testes.sh`: baterias auxiliares de testes.
-- Consulte `tests/README.md` para instruções detalhadas dos cenários.
+O projeto possui uma suíte completa de testes organizada em 6 categorias com 48 testes no total.
 
-1. **Operações Básicas**
-2. **Precedência de Operadores**
-3. **Números Negativos**
-4. **Parênteses Complexos**
-5. **Divisão**
-6. **Expressões Longas**
-7. **Casos Especiais**
-8. **Expressões com Espaços**
+**Localização:** `tests/scripts/`
+
+**Scripts Disponíveis:**
+- `test_category_all.sh` - Executa todos os testes de todas as categorias
+- `test_category_ast.sh` - Testes de construção da AST (10 testes)
+- `test_category_conditional.sh` - Testes de estruturas condicionais (3 testes)
+- `test_category_error.sh` - Testes de detecção de erros (4 testes)
+- `test_category_general.sh` - Testes gerais e básicos (11 testes)
+- `test_category_symbol.sh` - Testes de tabela de símbolos (10 testes)
+- `test_category_integration.sh` - Testes de integração AST + Símbolos (10 testes)
+
+**Executar testes:**
+```bash
+# Todos os testes
+bash tests/scripts/test_category_all.sh
+
+# Teste específico
+bash tests/scripts/test_category_ast.sh
+```
+
+**Consulte** `Docs/Testes.md` para documentação completa do sistema de testes.
+
+
 
 ## Processo de Compilação
 
@@ -211,25 +215,47 @@ make --debug=basic
 ### Desenvolvimento Rápido
 
 ```bash
-# Ciclo completo: limpar, compilar, testar
-make clean && make && make test
+# Compilar tudo
+make clean && make
 
-# Compilar e executar com arquivo
-make && ./compilador tests/files/04_expressions_only.py
+# Compilar e testar
+make clean && make && bash tests/scripts/test_category_all.sh
 
-# Compilar e testar expressão
-make && echo "3 + 4 * 2" | ./compilador
+# Apenas recompilar e testar
+make && bash tests/scripts/test_category_all.sh
+
+# Testar categoria específica
+make && bash tests/scripts/test_category_ast.sh
+
+# Compilar e executar teste individual
+make && ./compilador tests/files/ast_binop.py
 ```
 
 ### Automação
 
 ```bash
-# Script para desenvolvimento contínuo
+# Script para desenvolvimento contínuo com testes
 #!/bin/bash
 while true; do
     inotifywait -e modify lexer/lexer.l parser/parser.y src/main.c
-    make clean && make && make test
+    make clean && make && bash tests/scripts/test_category_all.sh
 done
+```
+
+### Ciclo Completo
+
+```bash
+# Limpar, compilar, todos os testes
+make clean && make && bash tests/scripts/test_category_all.sh
+
+# Se tudo passou, você verá:
+# [OK] AST: SUCESSO
+# [OK] CONDICIONAIS: SUCESSO
+# [OK] ERROS: SUCESSO
+# [OK] GERAIS: SUCESSO
+# [OK] SÍMBOLOS: SUCESSO
+# [OK] INTEGRAÇÃO: SUCESSO
+# Resultado: Todos os testes passaram com sucesso.
 ```
 
 ## Estrutura de Build
