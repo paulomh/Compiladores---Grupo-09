@@ -7,3 +7,6 @@ parser.tab.c
 parser.tab.h
 parser.tab.o
 .vscode
+src/*.o
+src/tabela.o
+src/ast.o

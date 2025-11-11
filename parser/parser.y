@@ -95,12 +95,12 @@ program:
     | statement_list   { 
         $$ = $1;
         printf("\n[SUCESSO!] AST construída com sucesso\n");
-        imprimirAST($$);  // Imprimir a árvore para debug
+        imprimirAST_formatada($$);  // Imprimir a árvore formatada para debug
     }
     | statement_list END_OF_FILE {
         $$ = $1;
         printf("\n[SUCESSO!] AST construída com sucesso (com EOF)\n");
-        imprimirAST($$);
+        imprimirAST_formatada($$);
     }
     ;
 

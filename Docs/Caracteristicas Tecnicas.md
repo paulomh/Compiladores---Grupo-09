@@ -9,11 +9,14 @@
   - [Makefile](#makefile)
   - [Comandos Disponíveis](#comandos-disponíveis)
 - [Sistema de Testes](#sistema-de-testes)
-  - [Scripts de Teste](#scripts-de-teste)
+  - [Organização de Testes](#organização-de-testes)
+  - [Scripts de Teste Disponíveis](#scripts-de-teste-disponíveis)
+  - [Arquivos de Teste](#arquivos-de-teste)
 - [Como Usar](#como-usar)
   - [Compilação](#compilação)
   - [Execução](#execução)
   - [Testes](#testes)
+  - [Ciclo Completo de Desenvolvimento](#ciclo-completo-de-desenvolvimento)
 
 ---
 
@@ -96,12 +99,41 @@ make help         # Mostrar ajuda
 
 ## Sistema de Testes
 
-### Scripts de Teste
+### Organização de Testes
 
-- `tests/run_all_tests.sh`: Executa a suíte completa de testes.
-- `tests/scripts/testes.sh`: Script auxiliar com baterias de testes.
-- `tests/scripts/test_symbol_table.sh`: Testes focados em tabela de símbolos.
-- Consulte também `tests/README.md` para instruções e detalhes dos cenários de teste.
+A suíte de testes é organizada em **6 categorias funcionais** com um total de **48 testes**:
+
+| Categoria | Testes | Descrição |
+|-----------|--------|-----------|
+| AST | 10 | Construção e validação da árvore sintática |
+| Condicionais | 3 | Estruturas `if/else` |
+| Erros | 4 | Detecção de erros com indicação de linha |
+| Gerais | 11 | Funcionalidades básicas do compilador |
+| Símbolos | 10 | Gerenciamento da tabela de símbolos |
+| Integração | 10 | Integração AST + Tabela de Símbolos |
+
+### Scripts de Teste Disponíveis
+
+```
+tests/scripts/
+├── test_category_all.sh              # Master script (executa todas as categorias)
+├── test_category_ast.sh              # Testes de AST
+├── test_category_conditional.sh      # Testes de condicionais
+├── test_category_error.sh            # Testes de erros
+├── test_category_general.sh          # Testes gerais
+├── test_category_symbol.sh           # Testes de símbolos
+└── test_category_integration.sh      # Testes de integração
+```
+
+### Arquivos de Teste
+
+45 arquivos de teste localizados em `tests/files/`:
+- 10 arquivos para AST (`ast_*.py`)
+- 3 arquivos para condicionais (`conditional_*.py`)
+- 4 arquivos para erros (`error_*.py`)
+- 10 arquivos para símbolos (`symbol_*.py`)
+- 10 arquivos para integração (`integration_*.py`)
+- 8 arquivos gerais (atribuições, comentários, expressões, funções, indentação, etc.)
 
 ## Como Usar
 
@@ -119,28 +151,45 @@ chmod +x compilar.sh
 ### Execução
 
 ```bash
-# Entrada interativa
-./compilador
-
 # Com arquivo
-./compilador tests/files/04_expressions_only.py
+./compilador tests/files/ast_binop.py
 
 # Pipe
-echo "3 + 4 * 2" | ./compilador
+echo "x = 10 + 5" | ./compilador
 ```
 
 ### Testes
 
 ```bash
-# Todos os testes
-chmod +x tests/run_all_tests.sh
-./tests/run_all_tests.sh
+# Todos os testes (suíte completa)
+make clean && make && bash tests/scripts/test_category_all.sh
 
-# Teste específico
-chmod +x tests/scripts/testes.sh
-./tests/scripts/testes.sh
-make test
+# Teste de categoria específica
+bash tests/scripts/test_category_ast.sh
+bash tests/scripts/test_category_symbol.sh
+bash tests/scripts/test_category_integration.sh
+
+# Teste individual
+./compilador tests/files/ast_binop.py
 ```
+
+### Ciclo Completo de Desenvolvimento
+
+```bash
+# Compilar, limpar e testar tudo
+make clean && make && bash tests/scripts/test_category_all.sh
+
+# Saída esperada (sucesso):
+# [OK] AST: SUCESSO
+# [OK] CONDICIONAIS: SUCESSO
+# [OK] ERROS: SUCESSO
+# [OK] GERAIS: SUCESSO
+# [OK] SÍMBOLOS: SUCESSO
+# [OK] INTEGRAÇÃO: SUCESSO
+# Resultado: Todos os testes passaram com sucesso.
+```
+
+**Para documentação completa dos testes**, consulte `Docs/Testes.md`.
 
 ---
 
