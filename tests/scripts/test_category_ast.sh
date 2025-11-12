@@ -5,7 +5,7 @@
 
 echo "=========================================="
 echo "  TESTES POR CATEGORIA: AST"
-echo "  Validação da Árvore Sintática (AST)"
+echo "  Validacao da Arvore Sintatica (AST)"
 echo "=========================================="
 echo
 
@@ -14,7 +14,7 @@ TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 
-# Função para testar construção de AST
+# Funcao para testar construcao de AST
 run_ast_test() {
     local file_path="$1"
     local test_name="$2"
@@ -25,7 +25,7 @@ run_ast_test() {
     echo -n "Testando: $(basename "$file_path") -> "
     
     if [ ! -f "$file_path" ]; then
-        echo "[FALHA] Arquivo não encontrado"
+        echo "[FALHA] Arquivo nao encontrado"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         return
     fi
@@ -34,28 +34,28 @@ run_ast_test() {
     local exit_code=$?
     
     if [ $exit_code -ne 0 ]; then
-        echo "[FALHA] Erro na compilação"
+        echo "[FALHA] Erro na compilacao"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         return
     fi
-    
-    if echo "$output" | grep -q "Análise concluída com sucesso" >/dev/null 2>&1; then
+
+    if echo "$output" | grep -q "Analise concluida com sucesso" >/dev/null 2>&1; then
         if [ -z "$expected_pattern" ] || echo "$output" | grep -q -E "$expected_pattern" >/dev/null 2>&1; then
             echo "[OK]"
             PASSED_TESTS=$((PASSED_TESTS + 1))
         else
-            echo "[FALHA] Padrão não encontrado: $expected_pattern"
+            echo "[FALHA] Padrao nao encontrado: $expected_pattern"
             FAILED_TESTS=$((FAILED_TESTS + 1))
         fi
     else
-        echo "[FALHA] AST não foi exibida"
+        echo "[FALHA] AST nao foi exibida"
         FAILED_TESTS=$((FAILED_TESTS + 1))
     fi
 }
 
 # Verificar se o compilador existe
 if [ ! -f "./compilador" ]; then
-    echo "[ERRO] Executável './compilador' não encontrado!"
+    echo "[ERRO] Executavel './compilador' nao encontrado!"
     echo "Execute 'make' ou 'make clean && make' para compilar o projeto."
     exit 1
 fi
@@ -63,20 +63,20 @@ fi
 echo "Iniciando testes de AST..."
 echo
 
-run_ast_test "tests/files/ast_assignment.py" "Atribuição" "="
-run_ast_test "tests/files/ast_binop.py" "Operação binária" "BINOP.*\+"
-run_ast_test "tests/files/ast_comparison.py" "Comparação" "BINOP.*'e'"
-run_ast_test "tests/files/ast_complex_nested.py" "Expressão complexa" "BINOP"
-run_ast_test "tests/files/ast_logical_ops.py" "Operadores lógicos" "BINOP"
-run_ast_test "tests/files/ast_parentheses.py" "Parênteses" "BINOP.*\\*"
-run_ast_test "tests/files/ast_precedence.py" "Precedência" "BINOP.*\\*"
-run_ast_test "tests/files/ast_unary_minus.py" "Unário menos" "UNOP"
-run_ast_test "tests/files/ast_unary_not.py" "Unário NOT" "UNOP"
-run_ast_test "tests/files/ast_variable.py" "Variável" "ID"
+run_ast_test "tests/files/ast_assignment.py" "Atribuicao" "="
+run_ast_test "tests/files/ast_binop.py" "Operacao binaria" "BINOP.*\+"
+run_ast_test "tests/files/ast_comparison.py" "Comparacao" "BINOP.*'e'"
+run_ast_test "tests/files/ast_complex_nested.py" "Expressao complexa" "BINOP"
+run_ast_test "tests/files/ast_logical_ops.py" "Operadores logicos" "BINOP"
+run_ast_test "tests/files/ast_parentheses.py" "Parenteses" "BINOP.*\\*"
+run_ast_test "tests/files/ast_precedence.py" "Precedencia" "BINOP.*\\*"
+run_ast_test "tests/files/ast_unary_minus.py" "Unario menos" "UNOP"
+run_ast_test "tests/files/ast_unary_not.py" "Unario NOT" "UNOP"
+run_ast_test "tests/files/ast_variable.py" "Variavel" "ID"
 
 echo
 echo "=========================================="
-echo "RELATÓRIO FINAL - AST"
+echo "RELATORIO FINAL - AST"
 echo "=========================================="
 echo "Total: $TOTAL_TESTS | Aprovados: $PASSED_TESTS | Falhados: $FAILED_TESTS"
 

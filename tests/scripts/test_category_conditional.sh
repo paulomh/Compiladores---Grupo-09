@@ -5,7 +5,7 @@
 
 echo "=========================================="
 echo "  TESTES POR CATEGORIA: CONDICIONAIS"
-echo "  Validação de Estruturas Condicionais"
+echo "  Validacao de Estruturas Condicionais"
 echo "=========================================="
 echo
 
@@ -14,7 +14,7 @@ TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 
-# Função para testar arquivo
+# Funcao para testar arquivo
 run_test() {
     local file_path="$1"
     local test_name="$2"
@@ -24,15 +24,15 @@ run_test() {
     echo -n "Testando: $(basename "$file_path") -> "
     
     if [ ! -f "$file_path" ]; then
-        echo "[FALHA] Arquivo não encontrado"
+        echo "[FALHA] Arquivo nao encontrado"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         return
     fi
     
     local output=$(./compilador "$file_path" 2>&1)
     local exit_code=$?
-    
-    if [ $exit_code -eq 0 ] && echo "$output" | grep -q "Análise concluída com sucesso" >/dev/null 2>&1; then
+
+    if [ $exit_code -eq 0 ] && echo "$output" | grep -q "Analise concluida com sucesso" >/dev/null 2>&1; then
         echo "[OK]"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -43,7 +43,7 @@ run_test() {
 
 # Verificar se o compilador existe
 if [ ! -f "./compilador" ]; then
-    echo "[ERRO] Executável './compilador' não encontrado!"
+    echo "[ERRO] Executavel './compilador' nao encontrado!"
     echo "Execute 'make' ou 'make clean && make' para compilar o projeto."
     exit 1
 fi
@@ -51,13 +51,13 @@ fi
 echo "Iniciando testes de condicionais..."
 echo
 
-run_test "tests/files/conditional_basic.py" "Condicional básica"
+run_test "tests/files/conditional_basic.py" "Condicional basica"
 run_test "tests/files/conditional_complex.py" "Condicional complexa"
 run_test "tests/files/conditional_nested.py" "Condicional aninhada"
 
 echo
 echo "=========================================="
-echo "RELATÓRIO FINAL - CONDICIONAIS"
+echo "RELATORIO FINAL - CONDICIONAIS"
 echo "=========================================="
 echo "Total: $TOTAL_TESTS | Aprovados: $PASSED_TESTS | Falhados: $FAILED_TESTS"
 

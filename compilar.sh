@@ -25,8 +25,8 @@ echo "4. Linkando executável..."
 gcc -Wall -Wextra -std=c99 -o compilador lex.yy.o parser.tab.o src/main.o src/ast.o src/tabela.o -lfl
 
 if [ -f "compilador" ]; then
-    echo "Compilação bem-sucedida!"
+    echo "Compilacao bem-sucedida!"
 else
-    echo "Erro na compilação"
+    echo "Erro na compilacao"
     exit 1
 fi

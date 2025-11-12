@@ -5,7 +5,7 @@
 
 echo "=========================================="
 echo "  TESTES POR CATEGORIA: ERROS"
-echo "  Validação de Detecção de Erros"
+echo "  Validacao de Detecao de Erros"
 echo "=========================================="
 echo
 
@@ -14,7 +14,7 @@ TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 
-# Função para testar arquivo com erro esperado
+# Funcao para testar arquivo com erro esperado
 run_error_test() {
     local file_path="$1"
     local test_name="$2"
@@ -24,7 +24,7 @@ run_error_test() {
     echo -n "Testando: $(basename "$file_path") -> "
     
     if [ ! -f "$file_path" ]; then
-        echo "[FALHA] Arquivo não encontrado"
+        echo "[FALHA] Arquivo nao encontrado"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         return
     fi
@@ -34,10 +34,10 @@ run_error_test() {
     
     if [ $exit_code -ne 0 ] || echo "$output" | grep -q -E "(Erro|erro|ERROR|syntax error)" >/dev/null 2>&1; then
         if echo "$output" | grep -q -E "(linha|line)[[:space:]]*[0-9]+" >/dev/null 2>&1; then
-            echo "[OK] Erro com indicação de linha"
+            echo "[OK] Erro com indicacao de linha"
             PASSED_TESTS=$((PASSED_TESTS + 1))
         else
-            echo "[FALHA] Erro sem indicação de linha"
+            echo "[FALHA] Erro sem indicacao de linha"
             FAILED_TESTS=$((FAILED_TESTS + 1))
         fi
     else
@@ -48,7 +48,7 @@ run_error_test() {
 
 # Verificar se o compilador existe
 if [ ! -f "./compilador" ]; then
-    echo "[ERRO] Executável './compilador' não encontrado!"
+    echo "[ERRO] Executavel './compilador' nao encontrado!"
     echo "Execute 'make' ou 'make clean && make' para compilar o projeto."
     exit 1
 fi
@@ -56,14 +56,14 @@ fi
 echo "Iniciando testes de erros..."
 echo
 
-run_error_test "tests/files/error_bad_indentation.py" "Indentação incorreta"
-run_error_test "tests/files/error_invalid_chars.py" "Caracteres inválidos"
+run_error_test "tests/files/error_bad_indentation.py" "Indentacao incorreta"
+run_error_test "tests/files/error_invalid_chars.py" "Caracteres invalidos"
 run_error_test "tests/files/error_syntax_error.py" "Erro de sintaxe"
-run_error_test "tests/files/error_unbalanced_parens.py" "Parênteses desbalanceados"
+run_error_test "tests/files/error_unbalanced_parens.py" "Parenteses desbalanceados"
 
 echo
 echo "=========================================="
-echo "RELATÓRIO FINAL - ERROS"
+echo "RELATORIO FINAL - ERROS"
 echo "=========================================="
 echo "Total: $TOTAL_TESTS | Aprovados: $PASSED_TESTS | Falhados: $FAILED_TESTS"
 

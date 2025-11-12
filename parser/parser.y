@@ -277,6 +277,6 @@ void yyerror(const char *s) {
 // Função de inicialização
 void init_compiler() {
     s = stack_init();
-    printf("=== Analisador Sintático do Compilador ===\n");
-    printf("Digite uma expressão aritmética (Ctrl+D para sair):\n\n");
+    printf("=== Analisador Sintatico do Compilador ===\n");
+    printf("Digite uma expressao aritmetica (Ctrl+D para sair):\n\n");
 }

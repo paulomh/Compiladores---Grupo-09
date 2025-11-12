@@ -9,12 +9,12 @@ echo "=========================================="
 echo
 
 if [ ! -f "./compilador" ]; then
-    echo "[ERRO] Executável './compilador' não encontrado!"
+    echo "[ERRO] Executavel './compilador' nao encontrado!"
     echo "Execute 'make' ou 'make clean && make' para compilar o projeto."
     exit 1
 fi
 
-echo "Iniciando execução de testes por categoria..."
+echo "Iniciando execucao de testes por categoria..."
 echo
 
 echo "CATEGORIA 1: TESTES DE AST"
@@ -23,7 +23,7 @@ if [ -f "tests/scripts/test_category_ast.sh" ]; then
     bash tests/scripts/test_category_ast.sh
     ast_result=$?
 else
-    echo "[ERRO] Script de AST não encontrado!"
+    echo "[ERRO] Script de AST nao encontrado!"
     ast_result=1
 fi
 
@@ -34,7 +34,7 @@ if [ -f "tests/scripts/test_category_conditional.sh" ]; then
     bash tests/scripts/test_category_conditional.sh
     conditional_result=$?
 else
-    echo "[ERRO] Script de condicionais não encontrado!"
+    echo "[ERRO] Script de condicionais nao encontrado!"
     conditional_result=1
 fi
 
@@ -45,7 +45,7 @@ if [ -f "tests/scripts/test_category_error.sh" ]; then
     bash tests/scripts/test_category_error.sh
     error_result=$?
 else
-    echo "[ERRO] Script de erros não encontrado!"
+    echo "[ERRO] Script de erros nao encontrado!"
     error_result=1
 fi
 
@@ -56,35 +56,35 @@ if [ -f "tests/scripts/test_category_general.sh" ]; then
     bash tests/scripts/test_category_general.sh
     general_result=$?
 else
-    echo "[ERRO] Script geral não encontrado!"
+    echo "[ERRO] Script geral nao encontrado!"
     general_result=1
 fi
 
 echo
-echo "CATEGORIA 5: TESTES DE SÍMBOLOS"
+echo "CATEGORIA 5: TESTES DE SIMBOLOS"
 echo "===================================================="
 if [ -f "tests/scripts/test_category_symbol.sh" ]; then
     bash tests/scripts/test_category_symbol.sh
     symbols_result=$?
 else
-    echo "[ERRO] Script de símbolos não encontrado!"
+    echo "[ERRO] Script de simbolos nao encontrado!"
     symbols_result=1
 fi
 
 echo
-echo "CATEGORIA 6: TESTES DE INTEGRAÇÃO"
+echo "CATEGORIA 6: TESTES DE INTEGRACAO"
 echo "===================================================="
 if [ -f "tests/scripts/test_category_integration.sh" ]; then
     bash tests/scripts/test_category_integration.sh
     integration_result=$?
 else
-    echo "[ERRO] Script de integração não encontrado!"
+    echo "[ERRO] Script de integracao nao encontrado!"
     integration_result=1
 fi
 
 echo
 echo "=========================================="
-echo "RELATÓRIO FINAL POR CATEGORIA"
+echo "RELATORIO FINAL POR CATEGORIA"
 echo "=========================================="
 
 if [ $ast_result -eq 0 ]; then
@@ -112,15 +112,15 @@ else
 fi
 
 if [ $symbols_result -eq 0 ]; then
-    echo "[OK] SÍMBOLOS: SUCESSO"
+    echo "[OK] SIMBOLOS: SUCESSO"
 else
-    echo "[FALHA] SÍMBOLOS: FALHOU"
+    echo "[FALHA] SIMBOLOS: FALHOU"
 fi
 
 if [ $integration_result -eq 0 ]; then
-    echo "[OK] INTEGRAÇÃO: SUCESSO"
+    echo "[OK] INTEGRACAO: SUCESSO"
 else
-    echo "[FALHA] INTEGRAÇÃO: FALHOU"
+    echo "[FALHA] INTEGRACAO: FALHOU"
 fi
 
 echo "=========================================="

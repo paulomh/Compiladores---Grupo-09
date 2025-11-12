@@ -1,11 +1,11 @@
 #!/bin/bash
 
-# Script de Testes por Categoria: SÍMBOLOS - Compilador Grupo 09
-# Testa gerenciamento de símbolos, tipos e escopo
+# Script de Testes por Categoria: SIMBOLOS - Compilador Grupo 09
+# Testa gerenciamento de simbolos, tipos e escopo
 
 echo "=========================================="
-echo "  TESTES POR CATEGORIA: SÍMBOLOS"
-echo "  Tabela de Símbolos, Tipos e Escopo"
+echo "  TESTES POR CATEGORIA: SIMBOLOS"
+echo "  Tabela de Simbolos, Tipos e Escopo"
 echo "=========================================="
 echo
 
@@ -14,7 +14,7 @@ TOTAL_TESTS=0
 PASSED_TESTS=0
 FAILED_TESTS=0
 
-# Função para testar sucesso
+# Funcao para testar sucesso
 run_test() {
     local file_path="$1"
     local test_name="$2"
@@ -24,7 +24,7 @@ run_test() {
     echo -n "Testando: $(basename "$file_path") -> "
     
     if [ ! -f "$file_path" ]; then
-        echo "[FALHA] Arquivo não encontrado"
+        echo "[FALHA] Arquivo nao encontrado"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         return
     fi
@@ -32,7 +32,7 @@ run_test() {
     local output=$(./compilador "$file_path" 2>&1)
     local exit_code=$?
     
-    if [ $exit_code -eq 0 ] && echo "$output" | grep -q "Análise concluída com sucesso" >/dev/null 2>&1; then
+    if [ $exit_code -eq 0 ] && echo "$output" | grep -q "Analise concluida com sucesso" >/dev/null 2>&1; then
         echo "[OK]"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -41,7 +41,7 @@ run_test() {
     fi
 }
 
-# Função para testar erro
+# Funcao para testar erro
 run_error_test() {
     local file_path="$1"
     local test_name="$2"
@@ -51,7 +51,7 @@ run_error_test() {
     echo -n "Testando: $(basename "$file_path") -> "
     
     if [ ! -f "$file_path" ]; then
-        echo "[FALHA] Arquivo não encontrado"
+        echo "[FALHA] Arquivo nao encontrado"
         FAILED_TESTS=$((FAILED_TESTS + 1))
         return
     fi
@@ -59,7 +59,7 @@ run_error_test() {
     local output=$(./compilador "$file_path" 2>&1)
     local exit_code=$?
     
-    if [ $exit_code -ne 0 ] || echo "$output" | grep -q -E "(não está definido|undefined)" >/dev/null 2>&1; then
+    if [ $exit_code -ne 0 ] || echo "$output" | grep -q -E "(nao esta definido|undefined)" >/dev/null 2>&1; then
         echo "[OK] Erro detectado"
         PASSED_TESTS=$((PASSED_TESTS + 1))
     else
@@ -70,35 +70,35 @@ run_error_test() {
 
 # Verificar se o compilador existe
 if [ ! -f "./compilador" ]; then
-    echo "[ERRO] Executável './compilador' não encontrado!"
+    echo "[ERRO] Executavel './compilador' nao encontrado!"
     echo "Execute 'make' ou 'make clean && make' para compilar o projeto."
     exit 1
 fi
 
-echo "Iniciando testes de símbolos..."
+echo "Iniciando testes de simbolos..."
 echo
 
-run_test "tests/files/symbol_simple_insert.py" "Inserção simples"
-run_test "tests/files/symbol_multiple_vars.py" "Múltiplas variáveis"
+run_test "tests/files/symbol_simple_insert.py" "Insercao simples"
+run_test "tests/files/symbol_multiple_vars.py" "Multiplas variaveis"
 run_test "tests/files/symbol_different_types.py" "Tipos diferentes"
-run_test "tests/files/symbol_redeclaration.py" "Redeclaração"
-run_test "tests/files/symbol_function_def.py" "Definição de função"
+run_test "tests/files/symbol_redeclaration.py" "Redeclaracao"
+run_test "tests/files/symbol_function_def.py" "Definicao de funcao"
 run_test "tests/files/symbol_scope.py" "Escopo"
-run_test "tests/files/symbol_function_params.py" "Parâmetros de função"
-run_test "tests/files/symbol_assignment_with_vars.py" "Atribuição com variáveis"
-run_test "tests/files/symbol_nested_functions.py" "Funções aninhadas"
-run_error_test "tests/files/symbol_undefined_var.py" "Variável indefinida"
+run_test "tests/files/symbol_function_params.py" "Parametros de funcao"
+run_test "tests/files/symbol_assignment_with_vars.py" "Atribuicao com variaveis"
+run_test "tests/files/symbol_nested_functions.py" "Funcoes aninhadas"
+run_error_test "tests/files/symbol_undefined_var.py" "Variavel indefinida"
 
 echo
 echo "=========================================="
-echo "RELATÓRIO FINAL - SÍMBOLOS"
+echo "RELATORIO FINAL - SIMBOLOS"
 echo "=========================================="
 echo "Total: $TOTAL_TESTS | Aprovados: $PASSED_TESTS | Falhados: $FAILED_TESTS"
 
 if [ $FAILED_TESTS -eq 0 ]; then
-    echo "Resultado: Todos os testes de símbolos passaram com sucesso."
+    echo "Resultado: Todos os testes de simbolos passaram com sucesso."
     exit 0
 else
-    echo "Resultado: Alguns testes de símbolos falharam."
+    echo "Resultado: Alguns testes de simbolos falharam."
     exit 1
 fi
