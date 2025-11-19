@@ -39,4 +39,14 @@ typedef struct {
     int contador_label;     // contador para labels
 } ListaInstrucoes;
 
+// Funções principais
+ListaInstrucoes* criarListaInstrucoes();
+void liberarListaInstrucoes(ListaInstrucoes *lista);
+
+// Funções auxiliares para criar instruções
+
+// Geração de nomes temporários e labels
+char* novoTemp(ListaInstrucoes *lista);
+int novoLabel(ListaInstrucoes *lista);
+
 #endif
