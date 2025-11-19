@@ -162,3 +162,41 @@ Instrucao *novaInstrucaoGoto(int label)
     instr->prox = NULL;
     return instr;
 }
+
+// Criar instrução if_false
+Instrucao *novaInstrucaoIfFalse(const char *cond, int label)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_IF_FALSE;
+    instr->resultado[0] = '\0';
+    strncpy(instr->arg1, cond, sizeof(instr->arg1) - 1);
+    instr->arg2[0] = '\0';
+    instr->op = 0;
+    instr->label = label;
+    instr->prox = NULL;
+    return instr;
+}
+
+// Criar instrução if_true
+Instrucao *novaInstrucaoIfTrue(const char *cond, int label)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_IF_TRUE;
+    instr->resultado[0] = '\0';
+    strncpy(instr->arg1, cond, sizeof(instr->arg1) - 1);
+    instr->arg2[0] = '\0';
+    instr->op = 0;
+    instr->label = label;
+    instr->prox = NULL;
+    return instr;
+}

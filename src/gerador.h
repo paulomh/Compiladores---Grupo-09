@@ -50,6 +50,8 @@ Instrucao* novaInstrucaoBinop(const char *dest, const char *arg1, char op, const
 Instrucao* novaInstrucaoUnop(const char *dest, char op, const char *arg);
 Instrucao* novaInstrucaoLabel(int label);
 Instrucao* novaInstrucaoGoto(int label);
+Instrucao* novaInstrucaoIfFalse(const char *cond, int label);
+Instrucao* novaInstrucaoIfTrue(const char *cond, int label);
 
 // Geração de nomes temporários e labels
 char* novoTemp(ListaInstrucoes *lista);
