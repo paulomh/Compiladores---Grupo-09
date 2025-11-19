@@ -45,6 +45,9 @@ void liberarListaInstrucoes(ListaInstrucoes *lista);
 
 // Funções auxiliares para criar instruções
 
+void adicionarInstrucao(ListaInstrucoes *lista, Instrucao *instr);
+Instrucao* novaInstrucaoAssign(const char *dest, const char *fonte);
+
 // Geração de nomes temporários e labels
 char* novoTemp(ListaInstrucoes *lista);
 int novoLabel(ListaInstrucoes *lista);

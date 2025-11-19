@@ -49,3 +49,40 @@ int novoLabel(ListaInstrucoes *lista)
 {
     return lista->contador_label++;
 }
+
+// Adicionar instrução à lista
+void adicionarInstrucao(ListaInstrucoes *lista, Instrucao *instr)
+{
+    if (!lista || !instr)
+        return;
+
+    instr->prox = NULL;
+    if (lista->fim)
+    {
+        lista->fim->prox = instr;
+        lista->fim = instr;
+    }
+    else
+    {
+        lista->inicio = lista->fim = instr;
+    }
+}
+
+// Criar instrução de atribuição
+Instrucao *novaInstrucaoAssign(const char *dest, const char *fonte)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_ASSIGN;
+    strncpy(instr->resultado, dest, sizeof(instr->resultado) - 1);
+    strncpy(instr->arg1, fonte, sizeof(instr->arg1) - 1);
+    instr->arg2[0] = '\0';
+    instr->op = 0;
+    instr->label = 0;
+    instr->prox = NULL;
+    return instr;
+}
