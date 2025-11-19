@@ -47,6 +47,8 @@ void liberarListaInstrucoes(ListaInstrucoes *lista);
 
 void adicionarInstrucao(ListaInstrucoes *lista, Instrucao *instr);
 Instrucao* novaInstrucaoAssign(const char *dest, const char *fonte);
+Instrucao* novaInstrucaoBinop(const char *dest, const char *arg1, char op, const char *arg2);
+Instrucao* novaInstrucaoUnop(const char *dest, char op, const char *arg);
 
 // Geração de nomes temporários e labels
 char* novoTemp(ListaInstrucoes *lista);

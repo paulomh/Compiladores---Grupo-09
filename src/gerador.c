@@ -86,3 +86,41 @@ Instrucao *novaInstrucaoAssign(const char *dest, const char *fonte)
     instr->prox = NULL;
     return instr;
 }
+
+// Criar instrução binária
+Instrucao *novaInstrucaoBinop(const char *dest, const char *arg1, char op, const char *arg2)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_BINOP;
+    strncpy(instr->resultado, dest, sizeof(instr->resultado) - 1);
+    strncpy(instr->arg1, arg1, sizeof(instr->arg1) - 1);
+    strncpy(instr->arg2, arg2, sizeof(instr->arg2) - 1);
+    instr->op = op;
+    instr->label = 0;
+    instr->prox = NULL;
+    return instr;
+}
+
+// Criar instrução unária
+Instrucao *novaInstrucaoUnop(const char *dest, char op, const char *arg)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_UNOP;
+    strncpy(instr->resultado, dest, sizeof(instr->resultado) - 1);
+    strncpy(instr->arg1, arg, sizeof(instr->arg1) - 1);
+    instr->arg2[0] = '\0';
+    instr->op = op;
+    instr->label = 0;
+    instr->prox = NULL;
+    return instr;
+}
