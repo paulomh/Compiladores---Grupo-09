@@ -44,11 +44,12 @@ ListaInstrucoes* criarListaInstrucoes();
 void liberarListaInstrucoes(ListaInstrucoes *lista);
 
 // Funções auxiliares para criar instruções
-
 void adicionarInstrucao(ListaInstrucoes *lista, Instrucao *instr);
 Instrucao* novaInstrucaoAssign(const char *dest, const char *fonte);
 Instrucao* novaInstrucaoBinop(const char *dest, const char *arg1, char op, const char *arg2);
 Instrucao* novaInstrucaoUnop(const char *dest, char op, const char *arg);
+Instrucao* novaInstrucaoLabel(int label);
+Instrucao* novaInstrucaoGoto(int label);
 
 // Geração de nomes temporários e labels
 char* novoTemp(ListaInstrucoes *lista);

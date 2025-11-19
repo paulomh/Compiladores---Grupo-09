@@ -124,3 +124,41 @@ Instrucao *novaInstrucaoUnop(const char *dest, char op, const char *arg)
     instr->prox = NULL;
     return instr;
 }
+
+// Criar instrução de label
+Instrucao *novaInstrucaoLabel(int label)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_LABEL;
+    instr->resultado[0] = '\0';
+    instr->arg1[0] = '\0';
+    instr->arg2[0] = '\0';
+    instr->op = 0;
+    instr->label = label;
+    instr->prox = NULL;
+    return instr;
+}
+
+// Criar instrução goto
+Instrucao *novaInstrucaoGoto(int label)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_GOTO;
+    instr->resultado[0] = '\0';
+    instr->arg1[0] = '\0';
+    instr->arg2[0] = '\0';
+    instr->op = 0;
+    instr->label = label;
+    instr->prox = NULL;
+    return instr;
+}
