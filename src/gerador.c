@@ -3,6 +3,35 @@
 #include <string.h>
 #include "gerador.h"
 #include "ast.h"
+#define MAX 255
+#define SAFE_STRCPY(dest, src)                          \
+    do                                                  \
+    {                                                   \
+        if ((src))                                      \
+        {                                               \
+            strncpy((dest), (src), sizeof((dest)) - 1); \
+            (dest)[sizeof((dest)) - 1] = '\0';          \
+        }                                               \
+        else                                            \
+        {                                               \
+            (dest)[0] = '\0';                           \
+        }                                               \
+    } while (0)
+
+static Instrucao *alocarInstrucao(TipoInstrucao tipo)
+{
+    Instrucao *instrucao = malloc(sizeof(Instrucao));
+
+    if (!instrucao)
+    {
+        perror("Erro fatal: Falha ao alocar instrucao");
+        exit(1);
+    }
+
+    memset(instrucao, 0, sizeof(Instrucao));
+    instrucao->tipo = tipo;
+    return instrucao;
+}
 
 // Criar uma nova lista de instruções
 ListaInstrucoes *criarListaInstrucoes()
@@ -39,9 +68,13 @@ void liberarListaInstrucoes(ListaInstrucoes *lista)
 // Gerar nome de variável temporária
 char *novoTemp(ListaInstrucoes *lista)
 {
-    static char temp[32];
-    snprintf(temp, sizeof(temp), "t%d", lista->contador_temp++);
-    return temp;
+    static char buffers[4][MAX];
+    static int idx = 0;
+
+    idx = (idx + 1) % 4;
+
+    snprintf(buffers[idx], MAX, "t%d", lista->contador_temp++);
+    return buffers[idx];
 }
 
 // Gerar novo label
@@ -71,197 +104,91 @@ void adicionarInstrucao(ListaInstrucoes *lista, Instrucao *instr)
 // Criar instrução de atribuição
 Instrucao *novaInstrucaoAssign(const char *dest, const char *fonte)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_ASSIGN;
-    strncpy(instr->resultado, dest, sizeof(instr->resultado) - 1);
-    strncpy(instr->arg1, fonte, sizeof(instr->arg1) - 1);
-    instr->arg2[0] = '\0';
-    instr->op = 0;
-    instr->label = 0;
-    instr->prox = NULL;
+    Instrucao *instr = alocarInstrucao(INSTR_ASSIGN);
+    SAFE_STRCPY(instr->resultado, dest);
+    SAFE_STRCPY(instr->arg1, fonte);
     return instr;
 }
 
 // Criar instrução binária
 Instrucao *novaInstrucaoBinop(const char *dest, const char *arg1, char op, const char *arg2)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_BINOP;
-    strncpy(instr->resultado, dest, sizeof(instr->resultado) - 1);
-    strncpy(instr->arg1, arg1, sizeof(instr->arg1) - 1);
-    strncpy(instr->arg2, arg2, sizeof(instr->arg2) - 1);
+    Instrucao *instr = alocarInstrucao(INSTR_BINOP);
+    SAFE_STRCPY(instr->resultado, dest);
+    SAFE_STRCPY(instr->arg1, arg1);
+    SAFE_STRCPY(instr->arg2, arg2);
     instr->op = op;
-    instr->label = 0;
-    instr->prox = NULL;
     return instr;
 }
 
 // Criar instrução unária
 Instrucao *novaInstrucaoUnop(const char *dest, char op, const char *arg)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_UNOP;
-    strncpy(instr->resultado, dest, sizeof(instr->resultado) - 1);
-    strncpy(instr->arg1, arg, sizeof(instr->arg1) - 1);
-    instr->arg2[0] = '\0';
+    Instrucao *instr = alocarInstrucao(INSTR_UNOP);
+    SAFE_STRCPY(instr->resultado, dest);
+    SAFE_STRCPY(instr->arg1, arg);
     instr->op = op;
-    instr->label = 0;
-    instr->prox = NULL;
     return instr;
 }
 
 // Criar instrução de label
 Instrucao *novaInstrucaoLabel(int label)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_LABEL;
-    instr->resultado[0] = '\0';
-    instr->arg1[0] = '\0';
-    instr->arg2[0] = '\0';
-    instr->op = 0;
+    Instrucao *instr = alocarInstrucao(INSTR_LABEL);
     instr->label = label;
-    instr->prox = NULL;
     return instr;
 }
 
 // Criar instrução goto
 Instrucao *novaInstrucaoGoto(int label)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_GOTO;
-    instr->resultado[0] = '\0';
-    instr->arg1[0] = '\0';
-    instr->arg2[0] = '\0';
-    instr->op = 0;
+    Instrucao *instr = alocarInstrucao(INSTR_GOTO);
     instr->label = label;
-    instr->prox = NULL;
     return instr;
 }
 
 // Criar instrução if_false
 Instrucao *novaInstrucaoIfFalse(const char *cond, int label)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_IF_FALSE;
-    instr->resultado[0] = '\0';
-    strncpy(instr->arg1, cond, sizeof(instr->arg1) - 1);
-    instr->arg2[0] = '\0';
-    instr->op = 0;
+    Instrucao *instr = alocarInstrucao(INSTR_IF_FALSE);
+    SAFE_STRCPY(instr->arg1, cond);
     instr->label = label;
-    instr->prox = NULL;
     return instr;
 }
 
 // Criar instrução if_true
 Instrucao *novaInstrucaoIfTrue(const char *cond, int label)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_IF_TRUE;
-    instr->resultado[0] = '\0';
-    strncpy(instr->arg1, cond, sizeof(instr->arg1) - 1);
-    instr->arg2[0] = '\0';
-    instr->op = 0;
+    Instrucao *instr = alocarInstrucao(INSTR_IF_TRUE);
+    SAFE_STRCPY(instr->arg1, cond);
     instr->label = label;
-    instr->prox = NULL;
     return instr;
 }
 
 // Criar instrução return
 Instrucao *novaInstrucaoReturn(const char *valor)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_RETURN;
-    instr->resultado[0] = '\0';
+    Instrucao *instr = alocarInstrucao(INSTR_RETURN);
     if (valor)
     {
-        strncpy(instr->arg1, valor, sizeof(instr->arg1) - 1);
+        SAFE_STRCPY(instr->arg1, valor);
     }
-    else
-    {
-        instr->arg1[0] = '\0';
-    }
-    instr->arg2[0] = '\0';
-    instr->op = 0;
-    instr->label = 0;
-    instr->prox = NULL;
     return instr;
 }
 
 // Criar instrução func_begin
 Instrucao *novaInstrucaoFuncBegin(const char *nome)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_FUNC_BEGIN;
-    strncpy(instr->resultado, nome, sizeof(instr->resultado) - 1);
-    instr->arg1[0] = '\0';
-    instr->arg2[0] = '\0';
-    instr->op = 0;
-    instr->label = 0;
-    instr->prox = NULL;
+    Instrucao *instr = alocarInstrucao(INSTR_FUNC_BEGIN);
+    SAFE_STRCPY(instr->resultado, nome);
     return instr;
 }
 
 // Criar instrução func_end
 Instrucao *novaInstrucaoFuncEnd(const char *nome)
 {
-    Instrucao *instr = malloc(sizeof(Instrucao));
-    if (!instr)
-    {
-        perror("malloc");
-        exit(1);
-    }
-    instr->tipo = INSTR_FUNC_END;
-    strncpy(instr->resultado, nome, sizeof(instr->resultado) - 1);
-    instr->arg1[0] = '\0';
-    instr->arg2[0] = '\0';
-    instr->op = 0;
-    instr->label = 0;
-    instr->prox = NULL;
+    Instrucao *instr = alocarInstrucao(INSTR_FUNC_END);
+    SAFE_STRCPY(instr->resultado, nome);
     return instr;
 }
 
@@ -269,42 +196,48 @@ Instrucao *novaInstrucaoFuncEnd(const char *nome)
 // Retorna o nome do temporário/variável que contém o resultado (cópia estática)
 static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
 {
-    static char resultado_estatico[32];
+    static char buffers[8][MAX];
+    static int idx = 0;
 
     if (!no)
         return NULL;
 
+    idx = (idx + 1) % 8;
+    char *resultado_atual = buffers[idx];
+
     // Número: retorna string com o valor
     if (no->op == 0 && no->nome[0] == '\0')
     {
-        snprintf(resultado_estatico, sizeof(resultado_estatico), "%d", no->val);
-        return resultado_estatico;
+        snprintf(resultado_atual, MAX, "%d", no->val);
+        return resultado_atual;
     }
 
     // Identificador: retorna o nome da variável
     if (no->op == 0 && no->nome[0] != '\0')
     {
-        strncpy(resultado_estatico, no->nome, sizeof(resultado_estatico) - 1);
-        resultado_estatico[sizeof(resultado_estatico) - 1] = '\0';
-        return resultado_estatico;
+        snprintf(resultado_atual, MAX, "%s", no->nome);
+        return resultado_atual;
     }
 
     // Operação binária
     if (no->op && no->esq && no->dir)
     {
-        char *esq_temp = gerarCodigoExpr(no->esq, lista);
-        char esq_copia[32];
-        strncpy(esq_copia, esq_temp, sizeof(esq_copia) - 1);
-        esq_copia[sizeof(esq_copia) - 1] = '\0';
+        char esq_temp[MAX];
+        char *ptr_esq = gerarCodigoExpr(no->esq, lista);
+        if (ptr_esq)
+            SAFE_STRCPY(esq_temp, ptr_esq);
+        else
+            esq_temp[0] = '\0';
 
-        char *dir_temp = gerarCodigoExpr(no->dir, lista);
-        char dir_copia[32];
-        strncpy(dir_copia, dir_temp, sizeof(dir_copia) - 1);
-        dir_copia[sizeof(dir_copia) - 1] = '\0';
+        char dir_temp[MAX];
+        char *ptr_dir = gerarCodigoExpr(no->dir, lista);
+        if (ptr_dir)
+            SAFE_STRCPY(dir_temp, ptr_dir);
+        else
+            dir_temp[0] = '\0';
 
-        char *resultado = novoTemp(lista);
-        strncpy(resultado_estatico, resultado, sizeof(resultado_estatico) - 1);
-        resultado_estatico[sizeof(resultado_estatico) - 1] = '\0';
+        char *temp_dest = novoTemp(lista);
+        snprintf(resultado_atual, MAX, "%s", temp_dest);
 
         // Mapear operadores especiais para caracteres únicos normalizados
         // Estes caracteres serão transcritos 1:1 para C pelo gerador final
@@ -334,49 +267,27 @@ static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
             break; // & = && (AND lógico)
         }
 
-        Instrucao *instr = novaInstrucaoBinop(resultado_estatico, esq_copia, op_char, dir_copia);
-        adicionarInstrucao(lista, instr);
-        return resultado_estatico;
+        adicionarInstrucao(lista, novaInstrucaoBinop(temp_dest, esq_temp, op_char, dir_temp));
+        return resultado_atual;
     }
 
     // Operação unária
-    if (no->op && no->dir)
+    if (no->op && (no->dir || no->esq))
     {
-        char *arg_temp = gerarCodigoExpr(no->dir, lista);
-        if (!arg_temp)
-            return NULL;
+        NoAST *target = no->dir ? no->dir : no->esq;
 
-        char arg_copia[32];
-        strncpy(arg_copia, arg_temp, sizeof(arg_copia) - 1);
-        arg_copia[sizeof(arg_copia) - 1] = '\0';
+        char arg_temp[MAX];
+        char *ptr_arg = gerarCodigoExpr(target, lista);
+        if (ptr_arg)
+            SAFE_STRCPY(arg_temp, ptr_arg);
+        else
+            arg_temp[0] = '\0';
 
-        char *resultado = novoTemp(lista);
-        strncpy(resultado_estatico, resultado, sizeof(resultado_estatico) - 1);
-        resultado_estatico[sizeof(resultado_estatico) - 1] = '\0';
+        char *temp_dest = novoTemp(lista);
+        snprintf(resultado_atual, MAX, "%s", temp_dest);
 
-        Instrucao *instr = novaInstrucaoUnop(resultado_estatico, no->op, arg_copia);
-        adicionarInstrucao(lista, instr);
-        return resultado_estatico;
-    }
-
-    // Operação unária à esquerda (menos unário com subtração de 0)
-    if (no->op && no->esq && !no->dir)
-    {
-        char *arg_temp = gerarCodigoExpr(no->esq, lista);
-        if (!arg_temp)
-            return NULL;
-
-        char arg_copia[32];
-        strncpy(arg_copia, arg_temp, sizeof(arg_copia) - 1);
-        arg_copia[sizeof(arg_copia) - 1] = '\0';
-
-        char *resultado = novoTemp(lista);
-        strncpy(resultado_estatico, resultado, sizeof(resultado_estatico) - 1);
-        resultado_estatico[sizeof(resultado_estatico) - 1] = '\0';
-
-        Instrucao *instr = novaInstrucaoUnop(resultado_estatico, no->op, arg_copia);
-        adicionarInstrucao(lista, instr);
-        return resultado_estatico;
+        adicionarInstrucao(lista, novaInstrucaoUnop(temp_dest, no->op, arg_temp));
+        return resultado_atual;
     }
 
     return NULL;
@@ -402,8 +313,7 @@ void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
         char *expr_temp = gerarCodigoExpr(raiz->esq, lista);
         if (expr_temp)
         {
-            Instrucao *instr = novaInstrucaoAssign(raiz->nome, expr_temp);
-            adicionarInstrucao(lista, instr);
+            adicionarInstrucao(lista, novaInstrucaoAssign(raiz->nome, expr_temp));
         }
         return;
     }
@@ -411,24 +321,23 @@ void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
     // IF (?)
     if (raiz->op == '?')
     {
+        char cond_copia[MAX];
         char *cond_temp = gerarCodigoExpr(raiz->esq, lista);
+        if (cond_temp)
+            SAFE_STRCPY(cond_copia, cond_temp);
+        else
+            cond_copia[0] = '\0';
+
         int label_false = novoLabel(lista);
-        int label_end = novoLabel(lista);
 
-        // if_false cond goto label_false
-        adicionarInstrucao(lista, novaInstrucaoIfFalse(cond_temp, label_false));
+        // if_false cond goto L_FALSE
+        adicionarInstrucao(lista, novaInstrucaoIfFalse(cond_copia, label_false));
 
-        // Código do then
+        // Then
         gerarCodigoIntermediario(raiz->dir, lista);
 
-        // goto label_end
-        adicionarInstrucao(lista, novaInstrucaoGoto(label_end));
-
-        // label_false:
+        // L_FALSE:
         adicionarInstrucao(lista, novaInstrucaoLabel(label_false));
-
-        // label_end:
-        adicionarInstrucao(lista, novaInstrucaoLabel(label_end));
         return;
     }
 
@@ -436,26 +345,33 @@ void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
     if (raiz->op == ':' && raiz->esq && raiz->esq->op == '?')
     {
         NoAST *if_node = raiz->esq;
+
+        char cond_copia[MAX];
         char *cond_temp = gerarCodigoExpr(if_node->esq, lista);
+        if (cond_temp)
+            SAFE_STRCPY(cond_copia, cond_temp);
+        else
+            cond_copia[0] = '\0';
+
         int label_else = novoLabel(lista);
         int label_end = novoLabel(lista);
 
-        // if_false cond goto label_else
-        adicionarInstrucao(lista, novaInstrucaoIfFalse(cond_temp, label_else));
+        // if_false cond goto L_ELSE
+        adicionarInstrucao(lista, novaInstrucaoIfFalse(cond_copia, label_else));
 
-        // Código do then
+        // Then
         gerarCodigoIntermediario(if_node->dir, lista);
 
-        // goto label_end
+        // goto L_END
         adicionarInstrucao(lista, novaInstrucaoGoto(label_end));
 
-        // label_else:
+        // L_ELSE:
         adicionarInstrucao(lista, novaInstrucaoLabel(label_else));
 
-        // Código do else
+        // Else
         gerarCodigoIntermediario(raiz->dir, lista);
 
-        // label_end:
+        // L_END:
         adicionarInstrucao(lista, novaInstrucaoLabel(label_end));
         return;
     }
@@ -483,7 +399,13 @@ void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
         if (raiz->esq)
         {
             char *ret_temp = gerarCodigoExpr(raiz->esq, lista);
-            adicionarInstrucao(lista, novaInstrucaoReturn(ret_temp));
+            char ret_copia[MAX];
+            if (ret_temp)
+                SAFE_STRCPY(ret_copia, ret_temp);
+            else
+                ret_copia[0] = '\0';
+
+            adicionarInstrucao(lista, novaInstrucaoReturn(ret_copia));
         }
         else
         {
