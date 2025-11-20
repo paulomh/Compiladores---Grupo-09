@@ -23,6 +23,8 @@ void yyerror(const char *s);
 extern char *yytext;
 extern int yychar;
 
+NoAST *raiz_ast = NULL;
+
 // Função para imprimir resultado da expressão
 void print_result(int value) {
     printf("Resultado: %d\n", value);
@@ -91,14 +93,16 @@ void print_result(int value) {
 %%
 
 program:
-    /* vazio */        { $$ = NULL; }
+    /* vazio */        { $$ = NULL; raiz_ast = NULL; }
     | statement_list   { 
         $$ = $1;
+        raiz_ast = $$;
         printf("\n[SUCESSO!] AST construída com sucesso\n");
         imprimirAST_formatada($$);  // Imprimir a árvore formatada para debug
     }
     | statement_list END_OF_FILE {
         $$ = $1;
+        raiz_ast = $$;
         printf("\n[SUCESSO!] AST construída com sucesso (com EOF)\n");
         imprimirAST_formatada($$);
     }
@@ -250,10 +254,7 @@ expr:
   | FLOAT               { $$ = novoNoNum((int)$1); }  // Temporário até implementar float
   | IDENTIFIER          { 
         Simbolo *s = buscarSimbolo($1);
-        if (s == NULL) {
-            yyerror("Variável não declarada");
-        }
-        $$ = novoNoId($1, s ? s->tipo : T_ERRO);
+        $$ = novoNoId($1, s ? s->tipo : T_INT);
     }
   | MINUS expr %prec UMINUS { $$ = novoNoOp('-', novoNoNum(0), $2); }
   | function_call       { $$ = $1; }
