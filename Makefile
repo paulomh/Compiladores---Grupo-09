@@ -2,7 +2,7 @@
 # Compilador usando Flex e Bison
 
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
+CFLAGS = -Wall -Wextra -std=gnu99
 LEX = flex
 YACC = bison
 YFLAGS = -d -v
