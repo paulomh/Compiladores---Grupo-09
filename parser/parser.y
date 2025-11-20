@@ -29,6 +29,8 @@ NoAST *raiz_ast = NULL;
 void print_result(int value) {
     printf("Resultado: %d\n", value);
 }
+
+char *nome_funcao_atual = NULL;
 %}
 
 // Habilita o rastreamento de localização (define yylloc)
@@ -167,23 +169,29 @@ if_statement:
     ;
 
 function_definition:
-    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite {
-        inserirFuncao($2, T_VOID);  // Por padrão, funções retornam void
-        NoAST* func_name = novoNoId($2, T_FUNC);
-        NoAST* func_params = $4;
-        NoAST* func_body = $7;
-        
-        // Verificar tipo de retorno na função
+    DEF IDENTIFIER {
+        inserirFuncao($2, T_VOID);
+
+        if(nome_funcao_atual)
+            free(nome_funcao_atual);
+
+        nome_funcao_atual = strdup($2);
+    }
+    LPAREN parameter_list RPAREN COLON suite {
+        NoAST *func_name = novoNoId($2, T_FUNC);
+        NoAST *func_params = $5;
+        NoAST *func_body = $8;
+
         Tipo tipoRetorno = verificarTipoRetorno(func_body);
         if (tipoRetorno != T_VOID) {
             Simbolo *s = buscarSimbolo($2);
-            if (s) {
-                s->info.funcao.tipoRetorno = tipoRetorno;
-            }
+            if (s) s->info.funcao.tipoRetorno = tipoRetorno;
         }
-        
+
         $$ = novoNoOp('F', novoNoOp('P', func_name, func_params), func_body);
-        finalizarEscopo(); // Fecha o escopo da função
+
+        finalizarEscopo();
+        nome_funcao_atual = NULL;
     }
     ;
 
@@ -198,11 +206,19 @@ parameter_list:
 parameter:
     IDENTIFIER {
         $$ = novoNoId($1, T_INT);
-        adicionarParametro($<strValue>-1, $1, T_INT); // Adiciona o parâmetro à função atual
+        if(nome_funcao_atual) {
+            adicionarParametro(nome_funcao_atual, $1, T_INT); // Adiciona o parâmetro à função atual
+        }
+        else
+        {
+            printf("Erro interno: Parametro '%s' fora de contexto de funcao.\n", $1);
+        }
     }
     | IDENTIFIER ASSIGNMENT expr {
         $$ = novoNoOp('=', novoNoId($1, T_INT), $3);
-        adicionarParametro($<strValue>-3, $1, T_INT); // Adiciona o parâmetro com valor padrão
+        if(nome_funcao_atual)
+            adicionarParametro(nome_funcao_atual, $1, T_INT); // Adiciona o parâmetro com valor padrão
+
     }
     ;
 
