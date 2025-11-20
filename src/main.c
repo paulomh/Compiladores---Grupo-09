@@ -66,10 +66,5 @@ int main(int argc, char *argv[])
         fclose(yyin);
     }
 
-    if (yyin != stdin)
-    {
-        fclose(yyin);
-    }
-
     return result;
 }
