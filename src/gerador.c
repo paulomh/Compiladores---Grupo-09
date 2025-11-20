@@ -192,6 +192,42 @@ Instrucao *novaInstrucaoFuncEnd(const char *nome)
     return instr;
 }
 
+Instrucao *novaInstrucaoParam(const char *nome)
+{
+    Instrucao *instr = alocarInstrucao(INSTR_PARAM);
+    SAFE_STRCPY(instr->arg1, nome); // "param nome"
+    return instr;
+}
+
+// Função auxiliar recursiva para extrair parâmetros de uma função
+static void processarParametros(NoAST *no, ListaInstrucoes *lista)
+{
+    if (!no)
+        return;
+
+    if (no->op == ',')
+    {
+        processarParametros(no->esq, lista);
+        processarParametros(no->dir, lista);
+        return;
+    }
+
+    if (no->op == '=')
+    {
+        if (no->esq && no->esq->nome[0] != '\0')
+        {
+            adicionarInstrucao(lista, novaInstrucaoParam(no->esq->nome));
+        }
+        return;
+    }
+
+    if (no->nome[0] != '\0')
+    {
+        adicionarInstrucao(lista, novaInstrucaoParam(no->nome));
+        return;
+    }
+}
+
 // Função auxiliar para gerar código de uma expressão
 // Retorna o nome do temporário/variável que contém o resultado (cópia estática)
 static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
@@ -385,6 +421,11 @@ void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
             const char *func_name = raiz->esq->esq->nome;
             adicionarInstrucao(lista, novaInstrucaoFuncBegin(func_name));
 
+            if (raiz->esq->dir)
+            {
+                processarParametros(raiz->esq->dir, lista);
+            }
+
             // Gerar código do corpo da função
             gerarCodigoIntermediario(raiz->dir, lista);
 
@@ -457,6 +498,9 @@ void imprimirCodigoIntermediario(ListaInstrucoes *lista)
             break;
         case INSTR_RETURN:
             printf("    return %s\n", atual->arg1[0] ? atual->arg1 : "");
+            break;
+        case INSTR_PARAM:
+            printf("    param %s\n", atual->arg1);
             break;
         case INSTR_FUNC_BEGIN:
             printf("\nfunc_begin %s\n", atual->resultado);
