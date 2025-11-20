@@ -201,6 +201,70 @@ Instrucao *novaInstrucaoIfTrue(const char *cond, int label)
     return instr;
 }
 
+// Criar instrução return
+Instrucao *novaInstrucaoReturn(const char *valor)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_RETURN;
+    instr->resultado[0] = '\0';
+    if (valor)
+    {
+        strncpy(instr->arg1, valor, sizeof(instr->arg1) - 1);
+    }
+    else
+    {
+        instr->arg1[0] = '\0';
+    }
+    instr->arg2[0] = '\0';
+    instr->op = 0;
+    instr->label = 0;
+    instr->prox = NULL;
+    return instr;
+}
+
+// Criar instrução func_begin
+Instrucao *novaInstrucaoFuncBegin(const char *nome)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_FUNC_BEGIN;
+    strncpy(instr->resultado, nome, sizeof(instr->resultado) - 1);
+    instr->arg1[0] = '\0';
+    instr->arg2[0] = '\0';
+    instr->op = 0;
+    instr->label = 0;
+    instr->prox = NULL;
+    return instr;
+}
+
+// Criar instrução func_end
+Instrucao *novaInstrucaoFuncEnd(const char *nome)
+{
+    Instrucao *instr = malloc(sizeof(Instrucao));
+    if (!instr)
+    {
+        perror("malloc");
+        exit(1);
+    }
+    instr->tipo = INSTR_FUNC_END;
+    strncpy(instr->resultado, nome, sizeof(instr->resultado) - 1);
+    instr->arg1[0] = '\0';
+    instr->arg2[0] = '\0';
+    instr->op = 0;
+    instr->label = 0;
+    instr->prox = NULL;
+    return instr;
+}
+
 // Gerar código intermediário a partir da AST
 void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
 {

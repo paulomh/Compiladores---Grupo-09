@@ -54,6 +54,9 @@ Instrucao* novaInstrucaoLabel(int label);
 Instrucao* novaInstrucaoGoto(int label);
 Instrucao* novaInstrucaoIfFalse(const char *cond, int label);
 Instrucao* novaInstrucaoIfTrue(const char *cond, int label);
+Instrucao* novaInstrucaoReturn(const char *valor);
+Instrucao* novaInstrucaoFuncBegin(const char *nome);
+Instrucao* novaInstrucaoFuncEnd(const char *nome);
 
 // Geração de nomes temporários e labels
 char* novoTemp(ListaInstrucoes *lista);
