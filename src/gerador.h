@@ -42,6 +42,8 @@ typedef struct {
 // Funções principais
 ListaInstrucoes* criarListaInstrucoes();
 void liberarListaInstrucoes(ListaInstrucoes *lista);
+void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista);
+void imprimirCodigoIntermediario(ListaInstrucoes *lista);
 
 // Funções auxiliares para criar instruções
 void adicionarInstrucao(ListaInstrucoes *lista, Instrucao *instr);
