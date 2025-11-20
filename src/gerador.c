@@ -265,6 +265,123 @@ Instrucao *novaInstrucaoFuncEnd(const char *nome)
     return instr;
 }
 
+// Função auxiliar para gerar código de uma expressão
+// Retorna o nome do temporário/variável que contém o resultado (cópia estática)
+static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
+{
+    static char resultado_estatico[32];
+
+    if (!no)
+        return NULL;
+
+    // Número: retorna string com o valor
+    if (no->op == 0 && no->nome[0] == '\0')
+    {
+        snprintf(resultado_estatico, sizeof(resultado_estatico), "%d", no->val);
+        return resultado_estatico;
+    }
+
+    // Identificador: retorna o nome da variável
+    if (no->op == 0 && no->nome[0] != '\0')
+    {
+        strncpy(resultado_estatico, no->nome, sizeof(resultado_estatico) - 1);
+        resultado_estatico[sizeof(resultado_estatico) - 1] = '\0';
+        return resultado_estatico;
+    }
+
+    // Operação binária
+    if (no->op && no->esq && no->dir)
+    {
+        char *esq_temp = gerarCodigoExpr(no->esq, lista);
+        char esq_copia[32];
+        strncpy(esq_copia, esq_temp, sizeof(esq_copia) - 1);
+        esq_copia[sizeof(esq_copia) - 1] = '\0';
+
+        char *dir_temp = gerarCodigoExpr(no->dir, lista);
+        char dir_copia[32];
+        strncpy(dir_copia, dir_temp, sizeof(dir_copia) - 1);
+        dir_copia[sizeof(dir_copia) - 1] = '\0';
+
+        char *resultado = novoTemp(lista);
+        strncpy(resultado_estatico, resultado, sizeof(resultado_estatico) - 1);
+        resultado_estatico[sizeof(resultado_estatico) - 1] = '\0';
+
+        // Mapear operadores especiais para caracteres únicos normalizados
+        // Estes caracteres serão transcritos 1:1 para C pelo gerador final
+        char op_char = no->op;
+        switch (no->op)
+        {
+        case 'e':
+            op_char = 'E';
+            break; // E = == (igualdade)
+        case 'd':
+            op_char = 'D';
+            break; // D = != (diferença)
+        case 'g':
+            op_char = 'G';
+            break; // G = >= (greater or equal)
+        case 'l':
+            op_char = 'L';
+            break; // L = <= (less or equal)
+        case '^':
+            op_char = 'P';
+            break; // P = ** (potência/pow)
+        case '|':
+            op_char = '|';
+            break; // | = || (OR lógico)
+        case '&':
+            op_char = '&';
+            break; // & = && (AND lógico)
+        }
+
+        Instrucao *instr = novaInstrucaoBinop(resultado_estatico, esq_copia, op_char, dir_copia);
+        adicionarInstrucao(lista, instr);
+        return resultado_estatico;
+    }
+
+    // Operação unária
+    if (no->op && no->dir)
+    {
+        char *arg_temp = gerarCodigoExpr(no->dir, lista);
+        if (!arg_temp)
+            return NULL;
+
+        char arg_copia[32];
+        strncpy(arg_copia, arg_temp, sizeof(arg_copia) - 1);
+        arg_copia[sizeof(arg_copia) - 1] = '\0';
+
+        char *resultado = novoTemp(lista);
+        strncpy(resultado_estatico, resultado, sizeof(resultado_estatico) - 1);
+        resultado_estatico[sizeof(resultado_estatico) - 1] = '\0';
+
+        Instrucao *instr = novaInstrucaoUnop(resultado_estatico, no->op, arg_copia);
+        adicionarInstrucao(lista, instr);
+        return resultado_estatico;
+    }
+
+    // Operação unária à esquerda (menos unário com subtração de 0)
+    if (no->op && no->esq && !no->dir)
+    {
+        char *arg_temp = gerarCodigoExpr(no->esq, lista);
+        if (!arg_temp)
+            return NULL;
+
+        char arg_copia[32];
+        strncpy(arg_copia, arg_temp, sizeof(arg_copia) - 1);
+        arg_copia[sizeof(arg_copia) - 1] = '\0';
+
+        char *resultado = novoTemp(lista);
+        strncpy(resultado_estatico, resultado, sizeof(resultado_estatico) - 1);
+        resultado_estatico[sizeof(resultado_estatico) - 1] = '\0';
+
+        Instrucao *instr = novaInstrucaoUnop(resultado_estatico, no->op, arg_copia);
+        adicionarInstrucao(lista, instr);
+        return resultado_estatico;
+    }
+
+    return NULL;
+}
+
 // Gerar código intermediário a partir da AST
 void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
 {
