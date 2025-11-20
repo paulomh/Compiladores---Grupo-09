@@ -435,57 +435,39 @@ void imprimirCodigoIntermediario(ListaInstrucoes *lista)
         switch (atual->tipo)
         {
         case INSTR_ASSIGN:
-            printf("%s = %s\n", atual->resultado, atual->arg1);
+            printf("    %s = %s\n", atual->resultado, atual->arg1);
             break;
-
         case INSTR_BINOP:
-            printf("%s = %s %c %s\n", atual->resultado, atual->arg1, atual->op, atual->arg2);
+            printf("    %s = %s %c %s\n", atual->resultado, atual->arg1, atual->op, atual->arg2);
             break;
-
         case INSTR_UNOP:
-            printf("%s = %c %s\n", atual->resultado, atual->op, atual->arg1);
+            printf("    %s = %c %s\n", atual->resultado, atual->op, atual->arg1);
             break;
-
         case INSTR_LABEL:
             printf("L%d:\n", atual->label);
             break;
-
         case INSTR_GOTO:
-            printf("goto L%d\n", atual->label);
+            printf("    goto L%d\n", atual->label);
             break;
-
         case INSTR_IF_FALSE:
-            printf("if_false %s goto L%d\n", atual->arg1, atual->label);
+            printf("    if_false %s goto L%d\n", atual->arg1, atual->label);
             break;
-
         case INSTR_IF_TRUE:
-            printf("if_true %s goto L%d\n", atual->arg1, atual->label);
+            printf("    if_true %s goto L%d\n", atual->arg1, atual->label);
             break;
-
         case INSTR_RETURN:
-            if (atual->arg1[0] != '\0')
-            {
-                printf("return %s\n", atual->arg1);
-            }
-            else
-            {
-                printf("return\n");
-            }
+            printf("    return %s\n", atual->arg1[0] ? atual->arg1 : "");
             break;
-
         case INSTR_FUNC_BEGIN:
             printf("\nfunc_begin %s\n", atual->resultado);
             break;
-
         case INSTR_FUNC_END:
             printf("func_end %s\n", atual->resultado);
             break;
-
         default:
-            printf("(instrucao desconhecida)\n");
+            printf("    (instrucao desconhecida)\n");
         }
         atual = atual->prox;
     }
-
     printf("==========================================\n");
 }
