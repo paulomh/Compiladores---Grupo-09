@@ -8,8 +8,7 @@
 #define MAX_ESCOPO 100
 
 Simbolo *tabela[MAX];
-int pilhaEscopo[MAX_ESCOPO];
-int topoEscopo = 0;
+int escopoAtualID = 0;
 
 unsigned hash(char *s)
 {
@@ -20,19 +19,15 @@ unsigned hash(char *s)
 }
 
 void iniciarEscopo() {
-    /* Evitar comportamento indefinido ao usar topoEscopo++ e topoEscopo
-       na mesma expressão. Primeiro armazena o valor atual, depois incrementa. */
-    pilhaEscopo[topoEscopo] = topoEscopo;
-    topoEscopo++;
+    escopoAtualID++;
 }
 
 void finalizarEscopo() {
-    if (topoEscopo > 0) {
-        // Remove símbolos do escopo atual
+    if (escopoAtualID > 0) {
         for (int i = 0; i < MAX; i++) {
             Simbolo **s = &tabela[i];
             while (*s) {
-                if ((*s)->escopo == topoEscopo - 1) {
+                if ((*s)->escopo == escopoAtualID - 1) {
                     Simbolo *temp = *s;
                     *s = (*s)->prox;
                     free(temp);
@@ -41,18 +36,18 @@ void finalizarEscopo() {
                 }
             }
         }
-        topoEscopo--;
+        escopoAtualID--;
     }
 }
 
 int escopoAtual() {
-    return topoEscopo > 0 ? pilhaEscopo[topoEscopo - 1] : 0;
+    return escopoAtualID;
 }
 
 int verificarRedeclaracao(char *nome) {
     unsigned i = hash(nome);
     for (Simbolo *s = tabela[i]; s; s = s->prox) {
-        if (strcmp(s->nome, nome) == 0 && s->escopo == escopoAtual()) {
+        if (strcmp(s->nome, nome) == 0 && s->escopo == escopoAtualID) {
             return 1; // Já existe no escopo atual
         }
     }
@@ -61,7 +56,7 @@ int verificarRedeclaracao(char *nome) {
 
 void inserirSimbolo(char *nome, Tipo tipo) {
     if (verificarRedeclaracao(nome)) {
-        printf("Erro: Variável '%s' já declarada no escopo atual\n", nome);
+        printf("Erro Semantico: '%s' ja declarado no escopo atual (nivel %d)\n", nome, escopoAtualID);
         return;
     }
 
@@ -69,14 +64,14 @@ void inserirSimbolo(char *nome, Tipo tipo) {
     Simbolo *s = malloc(sizeof(Simbolo));
     strcpy(s->nome, nome);
     s->tipo = tipo;
-    s->escopo = escopoAtual();
+    s->escopo = escopoAtualID;
     s->prox = tabela[i];
     tabela[i] = s;
 }
 
 void inserirFuncao(char *nome, Tipo tipoRetorno) {
     if (verificarRedeclaracao(nome)) {
-        printf("Erro: Função '%s' já declarada no escopo atual\n", nome);
+        printf("Erro Semantico: Funcao '%s' ja declarada.\n", nome);
         return;
     }
 
@@ -84,7 +79,7 @@ void inserirFuncao(char *nome, Tipo tipoRetorno) {
     Simbolo *s = malloc(sizeof(Simbolo));
     strcpy(s->nome, nome);
     s->tipo = T_FUNC;
-    s->escopo = escopoAtual();
+    s->escopo = escopoAtualID;
     s->info.funcao.tipoRetorno = tipoRetorno;
     s->info.funcao.params = NULL;
     s->info.funcao.numParams = 0;
@@ -97,8 +92,9 @@ void inserirFuncao(char *nome, Tipo tipoRetorno) {
 
 void adicionarParametro(char *nomeFuncao, char *nomeParam, Tipo tipo) {
     Simbolo *func = buscarSimbolo(nomeFuncao);
+
     if (!func || func->tipo != T_FUNC) {
-        printf("Erro: Função '%s' não encontrada\n", nomeFuncao);
+        printf("Erro Interno: Tentando adicionar param a '%s' inexistente.\n", nomeFuncao);
         return;
     }
 
@@ -123,11 +119,16 @@ Simbolo *buscarSimboloEscopo(char *nome, int escopo) {
 }
 
 Simbolo *buscarSimbolo(char *nome) {
-    // Busca do escopo mais interno para o mais externo
-    for (int e = topoEscopo - 1; e >= 0; e--) {
-        Simbolo *s = buscarSimboloEscopo(nome, pilhaEscopo[e]);
-        if (s) return s;
+    unsigned i = hash(nome);
+    Simbolo *s = tabela[i];
+
+    while (s != NULL) {
+        if (strcmp(s->nome, nome) == 0) {
+            return s;
+        }
+        s = s->prox;
     }
+    
     return NULL;
 }
 
