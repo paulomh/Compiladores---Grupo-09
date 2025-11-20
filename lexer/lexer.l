@@ -1,5 +1,6 @@
 %x INDENT_STATE
 %option yylineno
+%option noyywrap
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,42 +13,7 @@
 #undef YY_DECL
 #define YY_DECL int lex_engine(void)
 
-static char* copyString(const char* s) {
-    char* str = malloc(strlen(s) + 1);
-    strcpy(str, s);
-    return str;
-}
-
 int lex_engine(void);
-void yyerror(const char *s);
-int yylex(void);
-
-/*
- * regra <<EOF>> faz `return yylex()` que pode
- * causar recursão infinita.
- * 
- * <<EOF>> {
- *     if (eof_flag) {
- *         return 0;
- *     }
- * 
- *     eof_flag = 1;
- *     while (stack_peek(s) > 0) {
- *         stack_pop(s);
- *         dedent_line++;
- *     }
- * 
- *     // MUDANÇA CRÍTICA: Não chamar yylex() recursivamente
- *     if (dedent_line > 0) {
- *         // Deixa yylex() processar os DEDENTs na próxima chamada
- *         printf("[LEXER] -> EOF com %d DEDENTs pendentes\n", dedent_line);
- *         return 0; // Retorna 0 para indicar EOF, mas yylex() processará DEDENTs
- *     }
- * 
- *     printf("[LEXER] -> END_OF_FILE\n");
- *     return END_OF_FILE;
- * }
- */
 
 typedef struct stack 
 {
@@ -116,28 +82,26 @@ int yylex(void) {
 \"\"\"([^"]|\n)*\"\"\"   { printf("COMENTARIO COMPOSTO\n");}
 '''([^']|\n)*'''   { printf("COMENTARIO COMPOSTO\n");}
 
+"if"        { return IF; }
+"else"      { return ELSE; }
+"while"     { return WHILE; }
+"for"       { return FOR; }
+"and"       { return AND; }
+"or"        { return OR; }
+"not"       { return NOT; }
+"is"        { return IS; }
+"in"        { return IN; }
+"pass"      { return PASS; }
+"def"       { return DEF; }
+"return"    { printf("[LEXER] -> DEF\n"); return RETDEF; }
+
 [-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
-\"[^\"]*\"|\'[^\']*\' { yylval.strValue = copyString(yytext); return STRING; }
+\"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
 
 [a-zA-Z_][a-zA-Z0-9_]* { 
-    if (strcmp(yytext, "if") == 0) { printf("[LEXER] Linha %d -> IF\n", yylineno); return IF; }
-    else if (strcmp(yytext, "else") == 0) { printf("[LEXER] Linha %d -> ELSE\n", yylineno); return ELSE; }
-    else if (strcmp(yytext, "while") == 0) return WHILE;
-    else if (strcmp(yytext, "for") == 0) return FOR;
-    else if (strcmp(yytext, "and") == 0) return AND;
-    else if (strcmp(yytext, "or") == 0) return OR;
-    else if (strcmp(yytext, "not") == 0) return NOT;
-    else if (strcmp(yytext, "is") == 0) return IS;
-    else if (strcmp(yytext, "in") == 0) return IN;
-    else if (strcmp(yytext, "pass") == 0) return PASS;
-    else if (strcmp(yytext, "def") == 0) return DEF;
-    else if (strcmp(yytext, "return") == 0) return RETDEF;
-    else {
-        yylval.strValue = copyString(yytext); 
-        printf("[LEXER] -> IDENTIFIER: %s\n", yytext);
-        return IDENTIFIER;
-    }
+    yylval.strValue = strdup(yytext); 
+    return IDENTIFIER; 
 }
 
 "=="            { return EQUALS; }
@@ -248,5 +212,3 @@ int yylex(void) {
 
 . { printf("Caractere invalido: %s\n", yytext); }
 %%
-
-int yywrap() { return 1; }
