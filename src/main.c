@@ -4,6 +4,7 @@
 #include "ast.h"
 #include "tabela.h"
 #include "gerador.h"
+#include "codegen_c.h"
 #include "../parser.tab.h"
 
 extern int yyparse();
@@ -14,12 +15,7 @@ extern NoAST *raiz_ast;
 int main(int argc, char *argv[])
 {
     printf("=== Compilador - Grupo 09 ===\n");
-    // printf("Analisador de Expressoes Aritmeticas\n\n");
-
-    // Inicializar compilador
-    // init_compiler();
-    // yyparse();
-
+    
     if (argc > 1)
     {
         // Abrir arquivo de entrada se fornecido
@@ -39,6 +35,7 @@ int main(int argc, char *argv[])
     if (result == 0)
     {
         printf("\nAnalise concluida com sucesso!\n");
+
         if (raiz_ast)
         {
             imprimirAST_formatada(raiz_ast);
@@ -53,6 +50,16 @@ int main(int argc, char *argv[])
             ListaInstrucoes *codigo = criarListaInstrucoes();
             gerarCodigoIntermediario(raiz_ast, codigo);
             imprimirCodigoIntermediario(codigo);
+
+            if (argc > 1)
+            {
+                char output_file[512];
+                snprintf(output_file, sizeof(output_file), "%s.c", argv[1]);
+                CodeGenC *codegen = criarCodeGenC(output_file);
+                gerarCodigoC(codigo, codegen);
+                liberarCodeGenC(codegen);
+            }
+
             liberarListaInstrucoes(codigo);
         }
     }
@@ -61,7 +68,7 @@ int main(int argc, char *argv[])
         printf("\nErro na analise sintatica!\n");
     }
 
-    if (yyin != stdin)
+    if (yyin && yyin != stdin)
     {
         fclose(yyin);
     }
