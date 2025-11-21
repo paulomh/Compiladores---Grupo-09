@@ -21,4 +21,8 @@ CodeGenC* criarCodeGenC(const char *filename);
 void liberarCodeGenC(CodeGenC *codegen);
 void gerarCodigoC(ListaInstrucoes *codigo_intermediario, CodeGenC *codegen);
 
+// Funções auxiliares
+void imprimirIndentC(CodeGenC *codegen);
+void imprimirInstrucaoC(ListaInstrucoes *lista, Instrucao *instr, CodeGenC *codegen);
+
 #endif
