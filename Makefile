@@ -17,6 +17,7 @@ MAIN_SRC = src/main.c
 AST_SRC = src/ast.c
 TABELA_SRC = src/tabela.c
 GERADOR_SRC = src/gerador.c
+CODEGEN_C_SRC = src/codegen_c.c
 
 # Arquivos gerados
 LEXER_C = lex.yy.c
@@ -24,7 +25,7 @@ PARSER_C = parser.tab.c
 PARSER_H = parser.tab.h
 
 # Objetos
-OBJECTS = $(LEXER_C:.c=.o) $(PARSER_C:.c=.o) $(MAIN_SRC:.c=.o) $(AST_SRC:.c=.o) $(TABELA_SRC:.c=.o) $(GERADOR_SRC:.c=.o)
+OBJECTS = $(LEXER_C:.c=.o) $(PARSER_C:.c=.o) $(MAIN_SRC:.c=.o) $(AST_SRC:.c=.o) $(TABELA_SRC:.c=.o) $(GERADOR_SRC:.c=.o) $(CODEGEN_C_SRC:.c=.o)
 
 # Regra principal
 all: $(TARGET)
@@ -85,14 +86,15 @@ help:
 	@echo "  make help     - Mostrar esta ajuda"
 
 # Dependências
-$(MAIN_SRC:.c=.o): $(PARSER_H) src/ast.h src/tabela.h
+$(MAIN_SRC:.c=.o): $(PARSER_H) src/ast.h src/tabela.h src/gerador.h src/codegen_c.h
 $(LEXER_C:.c=.o): $(PARSER_H)
 $(AST_SRC:.c=.o): src/ast.h
 $(TABELA_SRC:.c=.o): src/tabela.h
 $(GERADOR_SRC:.c=.o): src/gerador.h src/ast.h
+$(CODEGEN_C_SRC:.c=.o): src/codegen_c.h src/gerador.h
 
 # Forçar recompilação do main.c após parser.tab.h e headers
-src/main.o: src/main.c $(PARSER_H) src/ast.h src/tabela.h
+src/main.o: src/main.c $(PARSER_H) src/ast.h src/tabela.h src/gerador.h src/codegen_c.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # Compilar ast.c
@@ -105,6 +107,10 @@ src/tabela.o: src/tabela.c src/tabela.h
 
 # Compilar gerador.c
 src/gerador.o: src/gerador.c src/gerador.h src/ast.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# Compilar codegen_c.c
+src/codegen_c.o: src/codegen_c.c src/codegen_c.h src/gerador.h
 	$(CC) $(CFLAGS) -c $< -o $@
 
 # === Teste isolado da AST ===
