@@ -7,10 +7,8 @@
 // Criar gerador de código C
 CodeGenC* criarCodeGenC(const char *filename) {
     CodeGenC *codegen = malloc(sizeof(CodeGenC));
-    if (!codegen) {
-        perror("malloc");
+    if (!codegen)
         exit(1);
-    }
     
     codegen->arquivo = fopen(filename, "w");
     if (!codegen->arquivo) {
@@ -21,12 +19,7 @@ CodeGenC* criarCodeGenC(const char *filename) {
     
     codegen->indent_level = 0;
     codegen->label_counter = 0;
-    // Inicializar conjunto de nomes declarados
     codegen->declared_vars = malloc(sizeof(char*) * 16);
-    if (!codegen->declared_vars) {
-        perror("malloc");
-        exit(1);
-    }
     codegen->declared_count = 0;
     codegen->declared_size = 16;
     
@@ -45,6 +38,13 @@ void liberarCodeGenC(CodeGenC *codegen) {
         free(codegen->declared_vars);
     }
     free(codegen);
+}
+
+static void reiniciarDeclaracoes(CodeGenC *codegen) {
+    for(int i = 0; i < codegen->declared_count; i++)
+        free(codegen->declared_vars[i]);
+    
+    codegen->declared_count = 0;
 }
 
 // Imprimir indentação
@@ -90,14 +90,12 @@ static int is_declared(CodeGenC *codegen, const char *name) {
 }
 
 static void add_declared(CodeGenC *codegen, const char *name) {
-    if (!codegen || !name) return;
+    if (is_declared(codegen, name)) return;
+
     if (codegen->declared_count >= codegen->declared_size) {
         int newsize = codegen->declared_size * 2;
         char **tmp = realloc(codegen->declared_vars, sizeof(char*) * newsize);
-        if (!tmp) {
-            perror("realloc");
-            return;
-        }
+        if (!tmp) return;
         codegen->declared_vars = tmp;
         codegen->declared_size = newsize;
     }
@@ -105,14 +103,15 @@ static void add_declared(CodeGenC *codegen, const char *name) {
 }
 
 // Imprimir instrução em C
-void imprimirInstrucaoC(ListaInstrucoes *lista, Instrucao *instr, CodeGenC *codegen) {
-    if (!codegen || !codegen->arquivo || !instr) return;
+void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
+    if (!codegen || !instr) return;
     
-    char var_temp[255];
-    char arg1_clean[255];
-    char arg2_clean[255];
+    char var_temp[255], arg1_clean[255], arg2_clean[255];
     
     switch (instr->tipo) {
+        case INSTR_PARAM:
+            break;
+
         case INSTR_ASSIGN: {
             // var = valor  ->  int var = valor;  (apenas na primeira vez)
             // Não sanitizar números; sanitizar identificadores
@@ -122,8 +121,7 @@ void imprimirInstrucaoC(ListaInstrucoes *lista, Instrucao *instr, CodeGenC *code
 
             // Preparar valor (preserva números negativos)
             if (eh_numero(instr->arg1)) {
-                strncpy(arg1_clean, instr->arg1, sizeof(arg1_clean) - 1);
-                arg1_clean[sizeof(arg1_clean) - 1] = '\0';
+                strcpy(arg1_clean, instr->arg1);
             } else {
                 limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
             }
@@ -146,20 +144,15 @@ void imprimirInstrucaoC(ListaInstrucoes *lista, Instrucao *instr, CodeGenC *code
             limpar_nome_var(result_clean, raw_result, sizeof(result_clean));
 
             // Preparar argumentos (preservar números)
-            if (eh_numero(instr->arg1)) {
-                strncpy(arg1_clean, instr->arg1, sizeof(arg1_clean) - 1);
-                arg1_clean[sizeof(arg1_clean) - 1] = '\0';
-            } else {
-                limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
-            }
-            if (eh_numero(instr->arg2)) {
-                strncpy(arg2_clean, instr->arg2, sizeof(arg2_clean) - 1);
-                arg2_clean[sizeof(arg2_clean) - 1] = '\0';
-            } else {
-                limpar_nome_var(arg2_clean, instr->arg2, sizeof(arg2_clean));
-            }
+            if (eh_numero(instr->arg1)) strcpy(arg1_clean, instr->arg1);
+            else limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
+            
+            if (eh_numero(instr->arg2)) strcpy(arg2_clean, instr->arg2);
+            else limpar_nome_var(arg2_clean, instr->arg2, sizeof(arg2_clean));
 
             imprimirIndentC(codegen);
+
+            char op_str[10] = "";
             
             // Tratamento especial para potência
             if (instr->op == 'P') {
@@ -172,31 +165,31 @@ void imprimirInstrucaoC(ListaInstrucoes *lista, Instrucao *instr, CodeGenC *code
                     fprintf(codegen->arquivo, "%s = (int)pow((double)%s, (double)%s);\n", 
                             result_clean, arg1_clean, arg2_clean);
                 }
+                return;
+            }
+            
+            switch (instr->op) {
+                case '+': strcpy(op_str, "+"); break;
+                case '-': strcpy(op_str, "-"); break;
+                case '*': strcpy(op_str, "*"); break;
+                case '/': strcpy(op_str, "/"); break;
+                case '%': strcpy(op_str, "%"); break;
+                case 'E': strcpy(op_str, "=="); break;
+                case 'D': strcpy(op_str, "!="); break;
+                case '<': strcpy(op_str, "<"); break;
+                case '>': strcpy(op_str, ">"); break;
+                case 'G': strcpy(op_str, ">="); break;
+                case 'L': strcpy(op_str, "<="); break;
+                case '&': strcpy(op_str, "&&"); break;
+                case '|': strcpy(op_str, "||"); break;
+                default: strcpy(op_str, "+"); break;
+            }
+
+            if (!is_declared(codegen, result_clean)) {
+                fprintf(codegen->arquivo, "int %s = %s %s %s;\n", result_clean, arg1_clean, op_str, arg2_clean);
+                add_declared(codegen, result_clean);
             } else {
-                // Transcrever operador diretamente
-                char op_str[10] = "";
-                switch (instr->op) {
-                    case '+': strcpy(op_str, "+"); break;
-                    case '-': strcpy(op_str, "-"); break;
-                    case '*': strcpy(op_str, "*"); break;
-                    case '/': strcpy(op_str, "/"); break;
-                    case '%': strcpy(op_str, "%"); break;
-                    case 'E': strcpy(op_str, "=="); break;  // Igualdade
-                    case 'D': strcpy(op_str, "!="); break;  // Diferença
-                    case '<': strcpy(op_str, "<"); break;   // Menor que
-                    case '>': strcpy(op_str, ">"); break;   // Maior que
-                    case 'G': strcpy(op_str, ">="); break;  // Maior ou igual
-                    case 'L': strcpy(op_str, "<="); break;  // Menor ou igual
-                    case '&': strcpy(op_str, "&&"); break;  // AND lógico
-                    case '|': strcpy(op_str, "||"); break;  // OR lógico
-                    default: strcpy(op_str, "+"); break;    // Fallback seguro
-                }
-                if (!is_declared(codegen, result_clean)) {
-                    fprintf(codegen->arquivo, "int %s = %s %s %s;\n", result_clean, arg1_clean, op_str, arg2_clean);
-                    add_declared(codegen, result_clean);
-                } else {
-                    fprintf(codegen->arquivo, "%s = %s %s %s;\n", result_clean, arg1_clean, op_str, arg2_clean);
-                }
+                fprintf(codegen->arquivo, "%s = %s %s %s;\n", result_clean, arg1_clean, op_str, arg2_clean);
             }
             break;
         }
@@ -204,33 +197,20 @@ void imprimirInstrucaoC(ListaInstrucoes *lista, Instrucao *instr, CodeGenC *code
         case INSTR_UNOP: {
             // resultado = op arg
             // Operadores unários: '-' (negação) e '!' (NOT lógico)
-            const char *raw_result_un = instr->resultado;
             char result_un_clean[255];
-            limpar_nome_var(result_un_clean, raw_result_un, sizeof(result_un_clean));
+            limpar_nome_var(result_un_clean, instr->resultado, sizeof(result_un_clean));
 
-            // Preparar argumento (preservar número se for literal)
-            if (eh_numero(instr->arg1)) {
-                strncpy(arg1_clean, instr->arg1, sizeof(arg1_clean) - 1);
-                arg1_clean[sizeof(arg1_clean) - 1] = '\0';
-            } else {
-                limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
-            }
+            if (eh_numero(instr->arg1)) strcpy(arg1_clean, instr->arg1);
+            else limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
 
             imprimirIndentC(codegen);
-            if (instr->op == '-') {
-                if (!is_declared(codegen, result_un_clean)) {
-                    fprintf(codegen->arquivo, "int %s = -%s;\n", result_un_clean, arg1_clean);
-                    add_declared(codegen, result_un_clean);
-                } else {
-                    fprintf(codegen->arquivo, "%s = -%s;\n", result_un_clean, arg1_clean);
-                }
-            } else if (instr->op == '!') {
-                if (!is_declared(codegen, result_un_clean)) {
-                    fprintf(codegen->arquivo, "int %s = !%s;\n", result_un_clean, arg1_clean);
-                    add_declared(codegen, result_un_clean);
-                } else {
-                    fprintf(codegen->arquivo, "%s = !%s;\n", result_un_clean, arg1_clean);
-                }
+            char op = (instr->op == '!') ? '!' : '-';
+            
+            if (!is_declared(codegen, result_un_clean)) {
+                fprintf(codegen->arquivo, "int %s = %c%s;\n", result_un_clean, op, arg1_clean);
+                add_declared(codegen, result_un_clean);
+            } else {
+                fprintf(codegen->arquivo, "%s = %c%s;\n", result_un_clean, op, arg1_clean);
             }
             break;
         }
@@ -246,62 +226,42 @@ void imprimirInstrucaoC(ListaInstrucoes *lista, Instrucao *instr, CodeGenC *code
             fprintf(codegen->arquivo, "goto L%d;\n", instr->label);
             break;
             
-        case INSTR_IF_FALSE: {
+        case INSTR_IF_FALSE:
             // if_false cond goto L  ->  if (!cond) goto L;
-            if (eh_numero(instr->arg1)) {
-                strncpy(arg1_clean, instr->arg1, sizeof(arg1_clean) - 1);
-                arg1_clean[sizeof(arg1_clean) - 1] = '\0';
-            } else {
+            if (eh_numero(instr->arg1))
+                strcpy(arg1_clean, instr->arg1);
+            else
                 limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
-            }
+
             imprimirIndentC(codegen);
             fprintf(codegen->arquivo, "if (!%s) goto L%d;\n", arg1_clean, instr->label);
             break;
-        }
             
-        case INSTR_IF_TRUE: {
+        case INSTR_IF_TRUE:
             // if_true cond goto L  ->  if (cond) goto L;
-            if (eh_numero(instr->arg1)) {
-                strncpy(arg1_clean, instr->arg1, sizeof(arg1_clean) - 1);
-                arg1_clean[sizeof(arg1_clean) - 1] = '\0';
-            } else {
+            if (eh_numero(instr->arg1))
+                strcpy(arg1_clean, instr->arg1);
+            else
                 limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
-            }
+
             imprimirIndentC(codegen);
             fprintf(codegen->arquivo, "if (%s) goto L%d;\n", arg1_clean, instr->label);
             break;
-        }
             
-        case INSTR_RETURN: {
+        case INSTR_RETURN:
             // return valor;
             imprimirIndentC(codegen);
             if (instr->arg1[0] != '\0') {
-                if (eh_numero(instr->arg1)) {
-                    strncpy(arg1_clean, instr->arg1, sizeof(arg1_clean) - 1);
-                    arg1_clean[sizeof(arg1_clean) - 1] = '\0';
-                } else {
-                    limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
-                }
+                if (eh_numero(instr->arg1)) strcpy(arg1_clean, instr->arg1);
+                else limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
                 fprintf(codegen->arquivo, "return %s;\n", arg1_clean);
             } else {
                 fprintf(codegen->arquivo, "return 0;\n");
             }
             break;
-        }
             
-        case INSTR_FUNC_BEGIN: {
-            // Início de função
-            char func_clean[255];
-            limpar_nome_var(func_clean, instr->resultado, sizeof(func_clean));
-            fprintf(codegen->arquivo, "\nvoid %s() {\n", func_clean);
-            codegen->indent_level++;
-            break;
-        }
-            
+        case INSTR_FUNC_BEGIN:
         case INSTR_FUNC_END:
-            // Fim de função
-            codegen->indent_level--;
-            fprintf(codegen->arquivo, "}\n");
             break;
             
         default:
@@ -317,20 +277,81 @@ void gerarCodigoC(ListaInstrucoes *codigo_intermediario, CodeGenC *codegen) {
     fprintf(codegen->arquivo, "#include <stdio.h>\n");
     fprintf(codegen->arquivo, "#include <stdlib.h>\n");
     fprintf(codegen->arquivo, "#include <math.h>\n\n");
+
+    Instrucao *atual = codigo_intermediario->inicio;
+
+    // Funções fora da main
+    while(atual) {
+        if (atual->tipo == INSTR_FUNC_BEGIN) {
+            reiniciarDeclaracoes(codegen);
+
+            char func_name[255];
+            limpar_nome_var(func_name, atual->resultado, sizeof(func_name));
+            
+            // Lookahead para pegar parâmetros
+            fprintf(codegen->arquivo, "int %s(", func_name);
+            
+            Instrucao *param = atual->prox;
+            int first_param = 1;
+            while (param && param->tipo == INSTR_PARAM) {
+                if (!first_param) fprintf(codegen->arquivo, ", ");
+                
+                char param_clean[255];
+                limpar_nome_var(param_clean, param->arg1, sizeof(param_clean));
+                
+                fprintf(codegen->arquivo, "int %s", param_clean);
+                add_declared(codegen, param_clean); // Registra que parâmetro já existe
+                
+                first_param = 0;
+                param = param->prox;
+            }
+            fprintf(codegen->arquivo, ") {\n");
+            codegen->indent_level = 1;
+            
+            // Gera o corpo da função
+            atual = param; // 'param' parou na primeira instrução que NÃO é PARAM
+            
+            while (atual && atual->tipo != INSTR_FUNC_END) {
+                if (atual->tipo != INSTR_FUNC_BEGIN) {
+                    imprimirInstrucaoC(atual, codegen);
+                }
+                atual = atual->prox;
+            }
+            
+            fprintf(codegen->arquivo, "}\n\n");
+            codegen->indent_level = 0;
+        }
+        
+        if (atual) atual = atual->prox;
+    }
     
     // Função main
+    reiniciarDeclaracoes(codegen);
     fprintf(codegen->arquivo, "int main() {\n");
     codegen->indent_level = 1;
+
+    atual = codigo_intermediario->inicio;
+    int dentro_funcao = 0;
     
-    // Gerar instruções
-    Instrucao *instr = codigo_intermediario->inicio;
-    while (instr) {
-        imprimirInstrucaoC(codigo_intermediario, instr, codegen);
-        instr = instr->prox;
+    while (atual) {
+        if (atual->tipo == INSTR_FUNC_BEGIN) {
+            dentro_funcao = 1;
+        }
+        
+        if (atual->tipo == INSTR_FUNC_END) {
+            dentro_funcao = 0;
+            atual = atual->prox;
+            continue;
+        }
+
+        if (!dentro_funcao) {
+            imprimirInstrucaoC(atual, codegen);
+        }
+        
+        atual = atual->prox;
     }
     
     // Fecha função main
-    codegen->indent_level = 0;
     fprintf(codegen->arquivo, "    return 0;\n");
     fprintf(codegen->arquivo, "}\n");
     
