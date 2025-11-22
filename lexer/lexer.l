@@ -1,5 +1,6 @@
 %x INDENT_STATE
 %option yylineno
+%option noyywrap
 %{
 #include <stdio.h>
 #include <stdlib.h>
@@ -12,42 +13,7 @@
 #undef YY_DECL
 #define YY_DECL int lex_engine(void)
 
-static char* copyString(const char* s) {
-    char* str = malloc(strlen(s) + 1);
-    strcpy(str, s);
-    return str;
-}
-
 int lex_engine(void);
-void yyerror(const char *s);
-int yylex(void);
-
-/*
- * regra <<EOF>> faz `return yylex()` que pode
- * causar recursão infinita.
- * 
- * <<EOF>> {
- *     if (eof_flag) {
- *         return 0;
- *     }
- * 
- *     eof_flag = 1;
- *     while (stack_peek(s) > 0) {
- *         stack_pop(s);
- *         dedent_line++;
- *     }
- * 
- *     // MUDANÇA CRÍTICA: Não chamar yylex() recursivamente
- *     if (dedent_line > 0) {
- *         // Deixa yylex() processar os DEDENTs na próxima chamada
- *         printf("[LEXER] -> EOF com %d DEDENTs pendentes\n", dedent_line);
- *         return 0; // Retorna 0 para indicar EOF, mas yylex() processará DEDENTs
- *     }
- * 
- *     printf("[LEXER] -> END_OF_FILE\n");
- *     return END_OF_FILE;
- * }
- */
 
 typedef struct stack 
 {
@@ -100,9 +66,7 @@ int newline_count = 0; // Contador global de "enters"
 
 int yylex(void) {
     if (dedent_line > 0) {
-        yylineno = dedent_line; // Apenas para depuração, pode ser removido
         dedent_line--;
-        printf("[LEXER] -> DEDENT\n");
         return DEDENT;
     }
     
@@ -116,28 +80,26 @@ int yylex(void) {
 \"\"\"([^"]|\n)*\"\"\"   { printf("COMENTARIO COMPOSTO\n");}
 '''([^']|\n)*'''   { printf("COMENTARIO COMPOSTO\n");}
 
-[-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
+"if"        { return IF; }
+"else"      { return ELSE; }
+"while"     { return WHILE; }
+"for"       { return FOR; }
+"and"       { return AND; }
+"or"        { return OR; }
+"not"       { return NOT; }
+"is"        { return IS; }
+"in"        { return IN; }
+"pass"      { return PASS; }
+"def"       { return DEF; }
+"return"    { return RETDEF; }
+
+[-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
-\"[^\"]*\"|\'[^\']*\' { yylval.strValue = copyString(yytext); return STRING; }
+\"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
 
 [a-zA-Z_][a-zA-Z0-9_]* { 
-    if (strcmp(yytext, "if") == 0) { printf("[LEXER] Linha %d -> IF\n", yylineno); return IF; }
-    else if (strcmp(yytext, "else") == 0) { printf("[LEXER] Linha %d -> ELSE\n", yylineno); return ELSE; }
-    else if (strcmp(yytext, "while") == 0) return WHILE;
-    else if (strcmp(yytext, "for") == 0) return FOR;
-    else if (strcmp(yytext, "and") == 0) return AND;
-    else if (strcmp(yytext, "or") == 0) return OR;
-    else if (strcmp(yytext, "not") == 0) return NOT;
-    else if (strcmp(yytext, "is") == 0) return IS;
-    else if (strcmp(yytext, "in") == 0) return IN;
-    else if (strcmp(yytext, "pass") == 0) return PASS;
-    else if (strcmp(yytext, "def") == 0) return DEF;
-    else if (strcmp(yytext, "return") == 0) return RETDEF;
-    else {
-        yylval.strValue = copyString(yytext); 
-        printf("[LEXER] -> IDENTIFIER: %s\n", yytext);
-        return IDENTIFIER;
-    }
+    yylval.strValue = strdup(yytext); 
+    return IDENTIFIER; 
 }
 
 "=="            { return EQUALS; }
@@ -152,38 +114,35 @@ int yylex(void) {
 "**"            { return EXPONENTIAL; }
 "//"            { return INTDIVIDE; }
 
-"!"             {  printf("[LEXER] -> DIFFERENT\n");  return DIFFERENT; }
-"="             {  printf("[LEXER] -> ASSIGNMENT\n"); return ASSIGNMENT; }
-"+"             {  printf("[LEXER] -> PLUS\n");  return PLUS; }
-"-"             {  printf("[LEXER] -> MINUS\n");  return MINUS; }
-"*"             {  printf("[LEXER] -> TIMES\n");  return TIMES; }
-"/"             {  printf("[LEXER] -> DIVIDE\n");  return DIVIDE; }
-"%"             {  printf("[LEXER] -> MODULE\n");  return MODULE; }
-">"             {  printf("[LEXER] -> GREATER\n");  return GREATER; }
-"<"             {  printf("[LEXER] -> LESS\n");  return LESS; }
-"("             {  printf("[LEXER] -> LPAREN\n");  return LPAREN; }
-")"             {  printf("[LEXER] -> RPAREN\n");  return RPAREN; }
-":"             {  printf("[LEXER] -> COLON\n");  return COLON; }
-","             {  printf("[LEXER] -> COMMA\n");  return COMMA; }
+"!"             {  return DIFFERENT; }
+"="             {  return ASSIGNMENT; }
+"+"             {  return PLUS; }
+"-"             {  return MINUS; }
+"*"             {  return TIMES; }
+"/"             {  return DIVIDE; }
+"%"             {  return MODULE; }
+">"             {  return GREATER; }
+"<"             {  return LESS; }
+"("             {  return LPAREN; }
+")"             {  return RPAREN; }
+":"             {  return COLON; }
+","             {  return COMMA; }
 
 [ \t\r]+        { /* Ignorar espaços em branco */ }
 
 \n { 
     newline_count++; // Incrementa o contador de "enters"
     BEGIN(INDENT_STATE); 
-    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count); 
     return NEWLINE; 
 }
 
 <INDENT_STATE>[ \t]+/[^\n] {
     int actual_level = strlen(yytext);
     int previous_level = stack_peek(s);
-    printf("Indent level check: actual=%d, previous=%d\n", actual_level, previous_level);
     BEGIN(INITIAL);
 
     if (actual_level > previous_level) {
         stack_push(s, actual_level);
-        printf("[LEXER] -> INDENT\n");
         return INDENT;
     } 
     
@@ -203,14 +162,12 @@ int yylex(void) {
 
 <INDENT_STATE>[ \t]*\n {
     newline_count++;
-    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count);
     return NEWLINE;
 }
 
 <INDENT_STATE>. {
     int actual_level = 0;
     int previous_level = stack_peek(s);
-     printf("Indent level check (no spaces): actual=%d, previous=%d\n", actual_level, previous_level);
     
     yyless(0);
     BEGIN(INITIAL);
@@ -231,22 +188,17 @@ int yylex(void) {
 
     if (yytext[0] != '\n' && !eof_newline_injected) {
         eof_newline_injected = 1;
-        printf("[LEXER] -> Inserindo NEWLINE antes do EOF\n");
         return NEWLINE;
     }
 
     if (stack_peek(s) > 0) {
         stack_pop(s);
-        printf("[LEXER] -> DEDENT (EOF)\n");
         return DEDENT;
     }
 
-    printf("[LEXER] -> END_OF_FILE\n");
     eof_flag = 1;
     return END_OF_FILE;
 }
 
 . { printf("Caractere invalido: %s\n", yytext); }
 %%
-
-int yywrap() { return 1; }

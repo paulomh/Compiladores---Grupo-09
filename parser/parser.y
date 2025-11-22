@@ -23,10 +23,14 @@ void yyerror(const char *s);
 extern char *yytext;
 extern int yychar;
 
+NoAST *raiz_ast = NULL;
+
 // Função para imprimir resultado da expressão
 void print_result(int value) {
     printf("Resultado: %d\n", value);
 }
+
+char *nome_funcao_atual = NULL;
 %}
 
 // Habilita o rastreamento de localização (define yylloc)
@@ -91,14 +95,16 @@ void print_result(int value) {
 %%
 
 program:
-    /* vazio */        { $$ = NULL; }
+    /* vazio */        { $$ = NULL; raiz_ast = NULL; }
     | statement_list   { 
         $$ = $1;
+        raiz_ast = $$;
         printf("\n[SUCESSO!] AST construída com sucesso\n");
         imprimirAST_formatada($$);  // Imprimir a árvore formatada para debug
     }
     | statement_list END_OF_FILE {
         $$ = $1;
+        raiz_ast = $$;
         printf("\n[SUCESSO!] AST construída com sucesso (com EOF)\n");
         imprimirAST_formatada($$);
     }
@@ -163,23 +169,29 @@ if_statement:
     ;
 
 function_definition:
-    DEF IDENTIFIER LPAREN parameter_list RPAREN COLON suite {
-        inserirFuncao($2, T_VOID);  // Por padrão, funções retornam void
-        NoAST* func_name = novoNoId($2, T_FUNC);
-        NoAST* func_params = $4;
-        NoAST* func_body = $7;
-        
-        // Verificar tipo de retorno na função
+    DEF IDENTIFIER {
+        inserirFuncao($2, T_VOID);
+
+        if(nome_funcao_atual)
+            free(nome_funcao_atual);
+
+        nome_funcao_atual = strdup($2);
+    }
+    LPAREN parameter_list RPAREN COLON suite {
+        NoAST *func_name = novoNoId($2, T_FUNC);
+        NoAST *func_params = $5;
+        NoAST *func_body = $8;
+
         Tipo tipoRetorno = verificarTipoRetorno(func_body);
         if (tipoRetorno != T_VOID) {
             Simbolo *s = buscarSimbolo($2);
-            if (s) {
-                s->info.funcao.tipoRetorno = tipoRetorno;
-            }
+            if (s) s->info.funcao.tipoRetorno = tipoRetorno;
         }
-        
+
         $$ = novoNoOp('F', novoNoOp('P', func_name, func_params), func_body);
-        finalizarEscopo(); // Fecha o escopo da função
+
+        finalizarEscopo();
+        nome_funcao_atual = NULL;
     }
     ;
 
@@ -194,11 +206,19 @@ parameter_list:
 parameter:
     IDENTIFIER {
         $$ = novoNoId($1, T_INT);
-        adicionarParametro($<strValue>-1, $1, T_INT); // Adiciona o parâmetro à função atual
+        if(nome_funcao_atual) {
+            adicionarParametro(nome_funcao_atual, $1, T_INT); // Adiciona o parâmetro à função atual
+        }
+        else
+        {
+            printf("Erro interno: Parametro '%s' fora de contexto de funcao.\n", $1);
+        }
     }
     | IDENTIFIER ASSIGNMENT expr {
         $$ = novoNoOp('=', novoNoId($1, T_INT), $3);
-        adicionarParametro($<strValue>-3, $1, T_INT); // Adiciona o parâmetro com valor padrão
+        if(nome_funcao_atual)
+            adicionarParametro(nome_funcao_atual, $1, T_INT); // Adiciona o parâmetro com valor padrão
+
     }
     ;
 
@@ -250,10 +270,7 @@ expr:
   | FLOAT               { $$ = novoNoNum((int)$1); }  // Temporário até implementar float
   | IDENTIFIER          { 
         Simbolo *s = buscarSimbolo($1);
-        if (s == NULL) {
-            yyerror("Variável não declarada");
-        }
-        $$ = novoNoId($1, s ? s->tipo : T_ERRO);
+        $$ = novoNoId($1, s ? s->tipo : T_INT);
     }
   | MINUS expr %prec UMINUS { $$ = novoNoOp('-', novoNoNum(0), $2); }
   | function_call       { $$ = $1; }
