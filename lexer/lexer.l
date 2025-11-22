@@ -66,9 +66,7 @@ int newline_count = 0; // Contador global de "enters"
 
 int yylex(void) {
     if (dedent_line > 0) {
-        yylineno = dedent_line; // Apenas para depuração, pode ser removido
         dedent_line--;
-        printf("[LEXER] -> DEDENT\n");
         return DEDENT;
     }
     
@@ -93,9 +91,9 @@ int yylex(void) {
 "in"        { return IN; }
 "pass"      { return PASS; }
 "def"       { return DEF; }
-"return"    { printf("[LEXER] -> DEF\n"); return RETDEF; }
+"return"    { return RETDEF; }
 
-[-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); printf("[LEXER] -> INT\n"); return INT; }
+[-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); return INT; }
 [-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
 \"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
 
@@ -116,38 +114,35 @@ int yylex(void) {
 "**"            { return EXPONENTIAL; }
 "//"            { return INTDIVIDE; }
 
-"!"             {  printf("[LEXER] -> DIFFERENT\n");  return DIFFERENT; }
-"="             {  printf("[LEXER] -> ASSIGNMENT\n"); return ASSIGNMENT; }
-"+"             {  printf("[LEXER] -> PLUS\n");  return PLUS; }
-"-"             {  printf("[LEXER] -> MINUS\n");  return MINUS; }
-"*"             {  printf("[LEXER] -> TIMES\n");  return TIMES; }
-"/"             {  printf("[LEXER] -> DIVIDE\n");  return DIVIDE; }
-"%"             {  printf("[LEXER] -> MODULE\n");  return MODULE; }
-">"             {  printf("[LEXER] -> GREATER\n");  return GREATER; }
-"<"             {  printf("[LEXER] -> LESS\n");  return LESS; }
-"("             {  printf("[LEXER] -> LPAREN\n");  return LPAREN; }
-")"             {  printf("[LEXER] -> RPAREN\n");  return RPAREN; }
-":"             {  printf("[LEXER] -> COLON\n");  return COLON; }
-","             {  printf("[LEXER] -> COMMA\n");  return COMMA; }
+"!"             {  return DIFFERENT; }
+"="             {  return ASSIGNMENT; }
+"+"             {  return PLUS; }
+"-"             {  return MINUS; }
+"*"             {  return TIMES; }
+"/"             {  return DIVIDE; }
+"%"             {  return MODULE; }
+">"             {  return GREATER; }
+"<"             {  return LESS; }
+"("             {  return LPAREN; }
+")"             {  return RPAREN; }
+":"             {  return COLON; }
+","             {  return COMMA; }
 
 [ \t\r]+        { /* Ignorar espaços em branco */ }
 
 \n { 
     newline_count++; // Incrementa o contador de "enters"
     BEGIN(INDENT_STATE); 
-    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count); 
     return NEWLINE; 
 }
 
 <INDENT_STATE>[ \t]+/[^\n] {
     int actual_level = strlen(yytext);
     int previous_level = stack_peek(s);
-    printf("Indent level check: actual=%d, previous=%d\n", actual_level, previous_level);
     BEGIN(INITIAL);
 
     if (actual_level > previous_level) {
         stack_push(s, actual_level);
-        printf("[LEXER] -> INDENT\n");
         return INDENT;
     } 
     
@@ -167,14 +162,12 @@ int yylex(void) {
 
 <INDENT_STATE>[ \t]*\n {
     newline_count++;
-    printf("[LEXER] -> NEWLINE (linha em branco, Total: %d)\n", newline_count);
     return NEWLINE;
 }
 
 <INDENT_STATE>. {
     int actual_level = 0;
     int previous_level = stack_peek(s);
-     printf("Indent level check (no spaces): actual=%d, previous=%d\n", actual_level, previous_level);
     
     yyless(0);
     BEGIN(INITIAL);
@@ -195,17 +188,14 @@ int yylex(void) {
 
     if (yytext[0] != '\n' && !eof_newline_injected) {
         eof_newline_injected = 1;
-        printf("[LEXER] -> Inserindo NEWLINE antes do EOF\n");
         return NEWLINE;
     }
 
     if (stack_peek(s) > 0) {
         stack_pop(s);
-        printf("[LEXER] -> DEDENT (EOF)\n");
         return DEDENT;
     }
 
-    printf("[LEXER] -> END_OF_FILE\n");
     eof_flag = 1;
     return END_OF_FILE;
 }
