@@ -115,7 +115,13 @@ program:
 statement_list:
     statement           { $$ = $1; }
     | statement_list statement {
-        $$ = novoNoOp(';', $1, $2);  // Usa ; como operador de sequência
+        if ($2 == NULL) {
+            $$ = $1; // Ignora statement vazio (linha em branco)
+        } else if ($1 == NULL) {
+            $$ = $2;
+        } else {
+            $$ = novoNoOp(';', $1, $2);
+        }
     }
     ;
 
@@ -286,6 +292,7 @@ expr:
   | LPAREN expr RPAREN  { $$ = $2; }
   | INT                 { $$ = novoNoNum($1); }
   | FLOAT               { $$ = novoNoNum((int)$1); }  // Temporário até implementar float
+  | STRING { $$ = novoNoStr($1); }
   | IDENTIFIER          { 
         Simbolo *s = buscarSimbolo($1);
         $$ = novoNoId($1, s ? s->tipo : T_INT);
