@@ -320,6 +320,13 @@ static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
         return resultado_atual;
     }
 
+    // String
+    if (no->tipo == T_STRING) 
+    {
+        snprintf(resultado_atual, MAX, "%s", no->nome);
+        return resultado_atual;
+    }
+
     // Identificador: retorna o nome da variável
     if (no->op == 0 && no->nome[0] != '\0')
     {
