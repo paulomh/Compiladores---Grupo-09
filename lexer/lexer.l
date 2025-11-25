@@ -126,6 +126,8 @@ int yylex(void) {
 "<"             {  return LESS; }
 "("             {  return LPAREN; }
 ")"             {  return RPAREN; }
+"["             {  return LBRACKET; }
+"]"             {  return RBRACKET; }
 ":"             {  return COLON; }
 ","             {  return COMMA; }
 

@@ -216,6 +216,27 @@ Instrucao *novaInstrucaoScan(const char *dest)
     return instr;
 }
 
+Instrucao *novaInstrucaoArrInit(const char *dest, const char *vals) {
+    Instrucao *instr = alocarInstrucao(INSTR_ARR_INIT);
+    SAFE_STRCPY(instr->resultado, dest);
+    SAFE_STRCPY(instr->arg1, vals);
+    return instr;
+}
+Instrucao *novaInstrucaoArrGet(const char *dest, const char *array, const char *index) {
+    Instrucao *instr = alocarInstrucao(INSTR_ARR_GET);
+    SAFE_STRCPY(instr->resultado, dest);
+    SAFE_STRCPY(instr->arg1, array);
+    SAFE_STRCPY(instr->arg2, index);
+    return instr;
+}
+Instrucao *novaInstrucaoArrSet(const char *array, const char *index, const char *val) {
+    Instrucao *instr = alocarInstrucao(INSTR_ARR_SET);
+    SAFE_STRCPY(instr->resultado, array);
+    SAFE_STRCPY(instr->arg1, index);
+    SAFE_STRCPY(instr->arg2, val);
+    return instr;
+}
+
 // Função auxiliar recursiva para extrair parâmetros de uma função
 static void processarParametros(NoAST *no, ListaInstrucoes *lista)
 {
@@ -357,6 +378,37 @@ static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
         SAFE_STRCPY(instr->arg2, args_buffer); 
         
         adicionarInstrucao(lista, instr);
+        return resultado_atual;
+    }
+
+    // 1. Inicialização Literal: [1, 2, 3] (Op '{')
+    if (no->op == '{')
+    {
+        char args_buffer[MAX] = ""; 
+        int pos = 0;
+        if (no->esq) montarStringArgumentos(no->esq, lista, args_buffer, &pos);
+        
+        char *temp_dest = novoTemp(lista);
+        snprintf(resultado_atual, MAX, "%s", temp_dest);
+        
+        adicionarInstrucao(lista, novaInstrucaoArrInit(temp_dest, args_buffer));
+        return resultado_atual;
+    }
+
+    // 2. Acesso: v[i] (Op '[')
+    if (no->op == '[') 
+    {
+        char *nome_vetor = no->esq->nome;
+        char *idx_temp = gerarCodigoExpr(no->dir, lista);
+        char idx_clean[MAX];
+        
+        if(idx_temp) SAFE_STRCPY(idx_clean, idx_temp);
+        else strcpy(idx_clean, "0");
+
+        char *temp_dest = novoTemp(lista);
+        snprintf(resultado_atual, MAX, "%s", temp_dest);
+        
+        adicionarInstrucao(lista, novaInstrucaoArrGet(temp_dest, nome_vetor, idx_clean));
         return resultado_atual;
     }
 
@@ -539,6 +591,31 @@ void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
         return;
     }
 
+    // Atribuição em Vetor (S)
+    if(raiz->op == 'S')
+    {
+        NoAST *acesso = raiz->esq; // Nó '['
+        NoAST *valor = raiz->dir;
+        
+        char *nome_vetor = acesso->esq->nome;
+        char *idx = gerarCodigoExpr(acesso->dir, lista);
+        char *val = gerarCodigoExpr(valor, lista);
+        
+        char idx_c[MAX], val_c[MAX];
+        if(idx) 
+            SAFE_STRCPY(idx_c, idx); 
+        else 
+            strcpy(idx_c, "0");
+
+        if(val) 
+            SAFE_STRCPY(val_c, val); 
+        else 
+            strcpy(val_c, "0");
+
+        adicionarInstrucao(lista, novaInstrucaoArrSet(nome_vetor, idx_c, val_c));
+        return;
+    }
+
     // Return (R)
     if (raiz->op == 'R')
     {
@@ -594,6 +671,15 @@ void imprimirCodigoIntermediario(ListaInstrucoes *lista)
             break;
         case INSTR_GOTO:
             printf("    goto L%d\n", atual->label);
+            break;
+        case INSTR_ARR_INIT: 
+            printf("    %s[] = {%s}\n", atual->resultado, atual->arg1); 
+            break;
+        case INSTR_ARR_GET:  
+            printf("    %s = %s[%s]\n", atual->resultado, atual->arg1, atual->arg2); 
+            break;
+        case INSTR_ARR_SET:  
+            printf("    %s[%s] = %s\n", atual->resultado, atual->arg1, atual->arg2); 
             break;
         case INSTR_IF_FALSE:
             printf("    if_false %s goto L%d\n", atual->arg1, atual->label);

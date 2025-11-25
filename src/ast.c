@@ -149,10 +149,36 @@ NoAST *novoNoAtrib(char *nome, NoAST *expr)
     return no;
 }
 
-// Verificação simples do tipo de retorno de função (stub)
+static Tipo buscarTipoRetornoReal(const NoAST *no) {
+    if (!no) return T_VOID;
+
+    if (no->op == 'R') {
+        if (no->esq) return no->esq->tipo;
+        return T_VOID; 
+    }
+
+    if (no->op == ';') {
+        Tipo tEsq = buscarTipoRetornoReal(no->esq);
+        Tipo tDir = buscarTipoRetornoReal(no->dir);
+        
+        if (tEsq != T_VOID) return tEsq;
+        if (tDir != T_VOID) return tDir;
+    }
+
+    if (no->op == '?' || no->op == ':') {
+        Tipo tDir = buscarTipoRetornoReal(no->dir);
+        if (tDir != T_VOID) return tDir;
+        
+        if (no->op == ':') {
+             Tipo tEsq = buscarTipoRetornoReal(no->esq);
+             if (tEsq != T_VOID) return tEsq;
+        }
+    }
+
+    return T_VOID;
+}
+
 Tipo verificarTipoRetorno(const NoAST *func_body)
-{
-    // Implementação mínima: se não há corpo, VOID; caso exista, assume o tipo do nó
-    if (!func_body) return T_VOID;
-    return func_body->tipo ? func_body->tipo : T_VOID;
+{    
+    return buscarTipoRetornoReal(func_body);
 }
