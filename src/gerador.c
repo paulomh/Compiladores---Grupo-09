@@ -591,6 +591,28 @@ void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
         return;
     }
 
+    if (raiz->op == 'W')
+    {
+        int label_inicio = novoLabel(lista);
+        int label_fim = novoLabel(lista);
+
+        adicionarInstrucao(lista, novaInstrucaoLabel(label_inicio));
+
+        char *cond_temp = gerarCodigoExpr(raiz->esq, lista);
+        char cond_copia[MAX];
+        
+        if (cond_temp) 
+            SAFE_STRCPY(cond_copia, cond_temp);
+        else 
+            strcpy(cond_copia, "0");
+
+        adicionarInstrucao(lista, novaInstrucaoIfFalse(cond_copia, label_fim));
+        gerarCodigoIntermediario(raiz->dir, lista);
+        adicionarInstrucao(lista, novaInstrucaoGoto(label_inicio));
+        adicionarInstrucao(lista, novaInstrucaoLabel(label_fim));
+        return;
+    }
+
     // Atribuição em Vetor (S)
     if(raiz->op == 'S')
     {
