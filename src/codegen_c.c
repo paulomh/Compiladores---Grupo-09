@@ -112,6 +112,21 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
         case INSTR_PARAM:
             break;
 
+        case INSTR_CALL:
+            char result_clean[255];
+            limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
+            imprimirIndentC(codegen);
+            
+            if (!is_declared(codegen, result_clean)) {
+                fprintf(codegen->arquivo, "int %s = ", result_clean);
+                add_declared(codegen, result_clean);
+            } else {
+                fprintf(codegen->arquivo, "%s = ", result_clean);
+            }
+
+            fprintf(codegen->arquivo, "%s(%s);\n", instr->arg1, instr->arg2);
+            break;
+
         case INSTR_ASSIGN: {
             // var = valor  ->  int var = valor;  (apenas na primeira vez)
             // Não sanitizar números; sanitizar identificadores
@@ -263,7 +278,37 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
         case INSTR_FUNC_BEGIN:
         case INSTR_FUNC_END:
             break;
-            
+        case INSTR_PRINT:
+            imprimirIndentC(codegen);
+            if(instr->arg1[0] == '\0')
+            {
+                fprintf(codegen->arquivo, "printf(\"\\n\");\n");
+            }
+            else
+            {
+                char arg_clean[255];
+                if(eh_numero(instr->arg1))
+                    strcpy(arg_clean, instr->arg1);
+                else
+                    limpar_nome_var(arg_clean, instr->arg1, sizeof(arg_clean));
+
+                fprintf(codegen->arquivo, "printf(\"%%d\\n\", %s);\n", arg_clean);
+            }
+            break;
+        case INSTR_SCAN: {
+            char result_clean[255];
+            limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
+            imprimirIndentC(codegen);
+
+            if(!is_declared(codegen, result_clean))
+            {
+                fprintf(codegen->arquivo, "int %s; ", result_clean);
+                add_declared(codegen, result_clean);
+            }
+
+            fprintf(codegen->arquivo, "scanf(\"%%d\", &%s);\n", result_clean);
+            break;
+        }
         default:
             break;
     }

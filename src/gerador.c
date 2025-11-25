@@ -18,6 +18,8 @@
         }                                               \
     } while (0)
 
+static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista);
+
 static Instrucao *alocarInstrucao(TipoInstrucao tipo)
 {
     Instrucao *instrucao = malloc(sizeof(Instrucao));
@@ -199,6 +201,21 @@ Instrucao *novaInstrucaoParam(const char *nome)
     return instr;
 }
 
+Instrucao *novaInstrucaoPrint(const char *var)
+{
+    Instrucao *instr = alocarInstrucao(INSTR_PRINT);
+    if(var)
+        SAFE_STRCPY(instr->arg1, var);
+    return instr;
+}
+
+Instrucao *novaInstrucaoScan(const char *dest)
+{
+    Instrucao *instr = alocarInstrucao(INSTR_SCAN);
+    SAFE_STRCPY(instr->resultado, dest);
+    return instr;
+}
+
 // Função auxiliar recursiva para extrair parâmetros de uma função
 static void processarParametros(NoAST *no, ListaInstrucoes *lista)
 {
@@ -228,6 +245,40 @@ static void processarParametros(NoAST *no, ListaInstrucoes *lista)
     }
 }
 
+// Função auxiliar recursiva para montar string de argumentos (ex: "t0, t1, 15")
+static void montarStringArgumentos(NoAST *no, ListaInstrucoes *lista, char *buffer, int *pos)
+{
+    if (!no) 
+        return;
+
+    if (no->op == ',')
+    {
+        montarStringArgumentos(no->esq, lista, buffer, pos);
+        
+        // Adiciona a vírgula separadora
+        if (*pos < MAX - 2) {
+            buffer[(*pos)++] = ',';
+            buffer[(*pos)++] = ' ';
+            buffer[*pos] = '\0';
+        }
+
+        montarStringArgumentos(no->dir, lista, buffer, pos);
+        return;
+    }
+
+    char *res_temp = gerarCodigoExpr(no, lista);
+    
+    // Copia o resultado para o buffer acumulador
+    if (res_temp) {
+        int len = strlen(res_temp);
+        if (*pos + len < MAX - 1) {
+            strcpy(buffer + *pos, res_temp);
+            *pos += len;
+            buffer[*pos] = '\0';
+        }
+    }
+}
+
 // Função auxiliar para gerar código de uma expressão
 // Retorna o nome do temporário/variável que contém o resultado (cópia estática)
 static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
@@ -252,6 +303,60 @@ static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
     if (no->op == 0 && no->nome[0] != '\0')
     {
         snprintf(resultado_atual, MAX, "%s", no->nome);
+        return resultado_atual;
+    }
+
+    if(no->op == 'C')
+    {
+        char *nome_func = no->esq->nome;
+
+        if(strcmp(nome_func, "input") == 0)
+        {
+            char *temp_dest = novoTemp(lista);
+            snprintf(resultado_atual, MAX, "%s", temp_dest);
+            adicionarInstrucao(lista, novaInstrucaoScan(temp_dest));
+            return resultado_atual;
+        }
+
+        if(no->esq && strcmp(nome_func, "print") == 0)
+        {
+            NoAST *arg = no->dir;
+
+            if(arg)
+            {
+                char *res_temp = gerarCodigoExpr(arg, lista);
+                char arg_copia[MAX];
+
+                if(res_temp)
+                    SAFE_STRCPY(arg_copia, res_temp);
+                else
+                    strcpy(arg_copia, "0");
+                
+                adicionarInstrucao(lista, novaInstrucaoPrint(arg_copia));
+            } 
+            else
+            {
+                adicionarInstrucao(lista, novaInstrucaoPrint(""));
+            } 
+            return NULL;
+        }
+
+        char args_buffer[MAX] = ""; 
+        int pos = 0;
+
+        if (no->dir) {
+            montarStringArgumentos(no->dir, lista, args_buffer, &pos);
+        }
+
+        char *temp_dest = novoTemp(lista);
+        snprintf(resultado_atual, MAX, "%s", temp_dest);
+
+        Instrucao *instr = alocarInstrucao(INSTR_CALL);
+        SAFE_STRCPY(instr->resultado, temp_dest);
+        SAFE_STRCPY(instr->arg1, nome_func);
+        SAFE_STRCPY(instr->arg2, args_buffer); 
+        
+        adicionarInstrucao(lista, instr);
         return resultado_atual;
     }
 
@@ -502,11 +607,20 @@ void imprimirCodigoIntermediario(ListaInstrucoes *lista)
         case INSTR_PARAM:
             printf("    param %s\n", atual->arg1);
             break;
+        case INSTR_CALL:
+            printf("    %s = call %s\n", atual->resultado, atual->arg1);
+            break;
         case INSTR_FUNC_BEGIN:
             printf("\nfunc_begin %s\n", atual->resultado);
             break;
         case INSTR_FUNC_END:
             printf("func_end %s\n", atual->resultado);
+            break;
+        case INSTR_PRINT:
+            printf("    print %s\n", atual->arg1);
+            break;
+        case INSTR_SCAN:
+            printf("    %s = call input\n", atual->resultado);
             break;
         default:
             printf("    (instrucao desconhecida)\n");

@@ -17,7 +17,9 @@ typedef enum {
     INSTR_CALL,         // x = call f, n
     INSTR_RETURN,       // return x
     INSTR_FUNC_BEGIN,   // func_begin f
-    INSTR_FUNC_END      // func_end f
+    INSTR_FUNC_END,      // func_end f
+    INSTR_PRINT, // print x
+    INSTR_SCAN // x = call input
 } TipoInstrucao;
 
 // Instrução de três endereços

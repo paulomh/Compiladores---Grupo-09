@@ -14,6 +14,7 @@
 #define YY_DECL int lex_engine(void)
 
 int lex_engine(void);
+void yyerror(const char *s);
 
 typedef struct stack 
 {
