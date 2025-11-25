@@ -169,7 +169,6 @@ int yylex(void) {
 }
 
 <INDENT_STATE>. {
-    int actual_level = 0;
     int previous_level = stack_peek(s);
     
     yyless(0);
