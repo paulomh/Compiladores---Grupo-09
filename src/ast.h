@@ -5,6 +5,7 @@ typedef enum
 {
     T_INT,
     T_FLOAT,
+    T_STRING,
     T_ERRO,
     T_VOID,   // adicionado p/ funções sem retorno
     T_FUNC    // adicionado p/ identificar símbolos de função
@@ -22,6 +23,7 @@ typedef struct noAST
 
 NoAST *novoNoOp(char op, NoAST *esq, NoAST *dir);
 NoAST *novoNoNum(int val);
+NoAST *novoNoStr(char *val);
 NoAST *novoNoId(char *nome, Tipo tipo);
 void imprimirAST(NoAST *no);
 void imprimirAST_formatada(const NoAST *raiz); // Adicione esta linha
