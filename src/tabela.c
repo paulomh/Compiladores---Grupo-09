@@ -27,7 +27,7 @@ void finalizarEscopo() {
         for (int i = 0; i < MAX; i++) {
             Simbolo **s = &tabela[i];
             while (*s) {
-                if ((*s)->escopo == escopoAtualID - 1) {
+                if ((*s)->escopo == escopoAtualID) { 
                     Simbolo *temp = *s;
                     *s = (*s)->prox;
                     free(temp);

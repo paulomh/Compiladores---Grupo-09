@@ -14,6 +14,7 @@
 #define YY_DECL int lex_engine(void)
 
 int lex_engine(void);
+void yyerror(const char *s);
 
 typedef struct stack 
 {
@@ -93,8 +94,8 @@ int yylex(void) {
 "def"       { return DEF; }
 "return"    { return RETDEF; }
 
-[-\+]?[0-9]+ {  yylval.intValue = atoi(yytext); return INT; }
-[-\+]?[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
+[0-9]+ {  yylval.intValue = atoi(yytext); return INT; }
+[0-9]+\.[0-9]+ { yylval.floatValue = atof(yytext); return FLOAT; }
 \"[^\"]*\"|\'[^\']*\' { yylval.strValue = strdup(yytext); return STRING; }
 
 [a-zA-Z_][a-zA-Z0-9_]* { 
@@ -125,6 +126,8 @@ int yylex(void) {
 "<"             {  return LESS; }
 "("             {  return LPAREN; }
 ")"             {  return RPAREN; }
+"["             {  return LBRACKET; }
+"]"             {  return RBRACKET; }
 ":"             {  return COLON; }
 ","             {  return COMMA; }
 
@@ -166,7 +169,6 @@ int yylex(void) {
 }
 
 <INDENT_STATE>. {
-    int actual_level = 0;
     int previous_level = stack_peek(s);
     
     yyless(0);

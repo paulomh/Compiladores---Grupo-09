@@ -3,6 +3,7 @@
 #include <string.h>
 #include <ctype.h>
 #include "codegen_c.h"
+#include "tabela.h"
 
 // Criar gerador de código C
 CodeGenC* criarCodeGenC(const char *filename) {
@@ -19,9 +20,26 @@ CodeGenC* criarCodeGenC(const char *filename) {
     
     codegen->indent_level = 0;
     codegen->label_counter = 0;
+
+    // 1. Variáveis Declaradas
     codegen->declared_vars = malloc(sizeof(char*) * 16);
     codegen->declared_count = 0;
     codegen->declared_size = 16;
+    
+    // 2. Ponteiros (Vetores)
+    codegen->ptr_vars = malloc(sizeof(char*) * 16);
+    codegen->ptr_count = 0;
+    codegen->ptr_size = 16;
+
+    // 3. Strings
+    codegen->str_vars = malloc(sizeof(char*) * 16);
+    codegen->str_count = 0;
+    codegen->str_size = 16;
+
+    if (!codegen->declared_vars || !codegen->ptr_vars || !codegen->str_vars) {
+        fprintf(stderr, "Erro de alocação de memória no Codegen\n");
+        exit(1);
+    }
     
     return codegen;
 }
@@ -33,18 +51,40 @@ void liberarCodeGenC(CodeGenC *codegen) {
     if (codegen->arquivo) {
         fclose(codegen->arquivo);
     }
+
+    // Liberar declaradas
     if (codegen->declared_vars) {
         for (int i = 0; i < codegen->declared_count; i++) free(codegen->declared_vars[i]);
         free(codegen->declared_vars);
     }
-    free(codegen);
+
+    // Liberar ponteiros
+    if (codegen->ptr_vars) {
+        for (int i = 0; i < codegen->ptr_count; i++) free(codegen->ptr_vars[i]);
+        free(codegen->ptr_vars);
+    }
+
+    // Liberar strings
+    if (codegen->str_count) {
+        for (int i = 0; i < codegen->str_count; i++) free(codegen->str_vars[i]);
+        free(codegen->str_vars);
+    }
+    if (codegen)
+        free(codegen);
 }
 
 static void reiniciarDeclaracoes(CodeGenC *codegen) {
-    for(int i = 0; i < codegen->declared_count; i++)
-        free(codegen->declared_vars[i]);
-    
+    // Limpa declaradas
+    for(int i = 0; i < codegen->declared_count; i++) free(codegen->declared_vars[i]);
     codegen->declared_count = 0;
+
+    // Limpa ponteiros
+    for(int i = 0; i < codegen->ptr_count; i++) free(codegen->ptr_vars[i]);
+    codegen->ptr_count = 0;
+
+    // Limpa strings
+    for(int i = 0; i < codegen->str_count; i++) free(codegen->str_vars[i]);
+    codegen->str_count = 0;
 }
 
 // Imprimir indentação
@@ -102,6 +142,39 @@ static void add_declared(CodeGenC *codegen, const char *name) {
     codegen->declared_vars[codegen->declared_count++] = strdup(name);
 }
 
+static int is_ptr(CodeGenC *codegen, const char *name) {
+    for (int i = 0; i < codegen->ptr_count; i++) {
+        if (strcmp(codegen->ptr_vars[i], name) == 0) return 1;
+    }
+    return 0;
+}
+
+static void add_ptr(CodeGenC *codegen, const char *name) {
+    if (is_ptr(codegen, name)) return;
+    if (codegen->ptr_count >= codegen->ptr_size) {
+        codegen->ptr_size *= 2;
+        codegen->ptr_vars = realloc(codegen->ptr_vars, sizeof(char*)*codegen->ptr_size);
+    }
+    codegen->ptr_vars[codegen->ptr_count++] = strdup(name);
+}
+
+// Helpers para Strings
+static int is_str(CodeGenC *codegen, const char *name) {
+    for (int i = 0; i < codegen->str_count; i++) {
+        if (strcmp(codegen->str_vars[i], name) == 0) return 1;
+    }
+    return 0;
+}
+
+static void add_str(CodeGenC *codegen, const char *name) {
+    if (is_str(codegen, name)) return;
+    if (codegen->str_count >= codegen->str_size) {
+        codegen->str_size *= 2;
+        codegen->str_vars = realloc(codegen->str_vars, sizeof(char*)*codegen->str_size);
+    }
+    codegen->str_vars[codegen->str_count++] = strdup(name);
+}
+
 // Imprimir instrução em C
 void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
     if (!codegen || !instr) return;
@@ -112,23 +185,59 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
         case INSTR_PARAM:
             break;
 
-        case INSTR_ASSIGN: {
-            // var = valor  ->  int var = valor;  (apenas na primeira vez)
-            // Não sanitizar números; sanitizar identificadores
-            const char *raw_result = instr->resultado;
+        case INSTR_CALL: {
             char result_clean[255];
-            limpar_nome_var(result_clean, raw_result, sizeof(result_clean));
+            limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
+            
+            Simbolo *s = buscarSimbolo(instr->arg1); // arg1 é o nome da função
+            
+            int eh_void = (s && s->info.funcao.tipoRetorno == T_VOID);
 
-            // Preparar valor (preserva números negativos)
-            if (eh_numero(instr->arg1)) {
+            imprimirIndentC(codegen);
+            
+            if (eh_void) {
+                fprintf(codegen->arquivo, "%s(%s);\n", instr->arg1, instr->arg2);
+            } 
+            else {
+                if (!is_declared(codegen, result_clean)) {
+                    fprintf(codegen->arquivo, "int %s = ", result_clean);
+                    add_declared(codegen, result_clean);
+                } else {
+                    fprintf(codegen->arquivo, "%s = ", result_clean);
+                }
+                fprintf(codegen->arquivo, "%s(%s);\n", instr->arg1, instr->arg2);
+            }
+            break;
+        }
+
+        case INSTR_ASSIGN: {
+            char result_clean[255], arg1_clean[255];
+            limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
+            
+            if (instr->arg1[0] == '"') {
+                strcpy(arg1_clean, instr->arg1); // Copia com aspas
+            } else if (eh_numero(instr->arg1)) {
                 strcpy(arg1_clean, instr->arg1);
             } else {
                 limpar_nome_var(arg1_clean, instr->arg1, sizeof(arg1_clean));
             }
 
             imprimirIndentC(codegen);
+            
+            int is_string_assign = (instr->arg1[0] == '"') || is_str(codegen, arg1_clean);
+
             if (!is_declared(codegen, result_clean)) {
-                fprintf(codegen->arquivo, "int %s = %s;\n", result_clean, arg1_clean);
+                if (is_string_assign) {
+                    fprintf(codegen->arquivo, "char *%s = %s;\n", result_clean, arg1_clean);
+                    add_str(codegen, result_clean); // Marca resultado como string
+                } 
+                else if (is_ptr(codegen, arg1_clean)) {
+                    fprintf(codegen->arquivo, "int *%s = %s;\n", result_clean, arg1_clean);
+                    add_ptr(codegen, result_clean);
+                } 
+                else {
+                    fprintf(codegen->arquivo, "int %s = %s;\n", result_clean, arg1_clean);
+                }
                 add_declared(codegen, result_clean);
             } else {
                 fprintf(codegen->arquivo, "%s = %s;\n", result_clean, arg1_clean);
@@ -225,6 +334,53 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
             imprimirIndentC(codegen);
             fprintf(codegen->arquivo, "goto L%d;\n", instr->label);
             break;
+        
+        case INSTR_ARR_INIT: {
+            // Gera literal composto C99: int *t0 = (int[]){1, 2, 3};
+            char result_clean[255];
+            limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
+            imprimirIndentC(codegen);
+            
+            if (!is_declared(codegen, result_clean)) {
+                // Declara como ponteiro e inicializa
+                fprintf(codegen->arquivo, "int *%s = (int[]){%s};\n", result_clean, instr->arg1);
+                add_declared(codegen, result_clean);
+                add_ptr(codegen, result_clean); // Marca como ponteiro!
+            }
+            break;
+        }
+
+        case INSTR_ARR_GET: {
+            char dest[255], arr[255], idx[255];
+            limpar_nome_var(dest, instr->resultado, 255);
+            limpar_nome_var(arr, instr->arg1, 255);
+            if(eh_numero(instr->arg2)) strcpy(idx, instr->arg2);
+            else limpar_nome_var(idx, instr->arg2, 255);
+
+            imprimirIndentC(codegen);
+            if (!is_declared(codegen, dest)) {
+                fprintf(codegen->arquivo, "int %s = %s[%s];\n", dest, arr, idx);
+                add_declared(codegen, dest);
+            } else {
+                fprintf(codegen->arquivo, "%s = %s[%s];\n", dest, arr, idx);
+            }
+            break;
+        }
+
+        case INSTR_ARR_SET: {
+            char arr[255], idx[255], val[255];
+            limpar_nome_var(arr, instr->resultado, 255);
+            
+            if(eh_numero(instr->arg1)) strcpy(idx, instr->arg1);
+            else limpar_nome_var(idx, instr->arg1, 255);
+            
+            if(eh_numero(instr->arg2)) strcpy(val, instr->arg2);
+            else limpar_nome_var(val, instr->arg2, 255);
+
+            imprimirIndentC(codegen);
+            fprintf(codegen->arquivo, "%s[%s] = %s;\n", arr, idx, val);
+            break;
+        }
             
         case INSTR_IF_FALSE:
             // if_false cond goto L  ->  if (!cond) goto L;
@@ -263,7 +419,38 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
         case INSTR_FUNC_BEGIN:
         case INSTR_FUNC_END:
             break;
-            
+        case INSTR_PRINT: {
+            imprimirIndentC(codegen);
+            if (instr->arg1[0] == '\0') {
+                fprintf(codegen->arquivo, "printf(\"\\n\");\n");
+            } else {
+                char arg_clean[255];
+                if (instr->arg1[0] == '"') strcpy(arg_clean, instr->arg1);
+                else if (eh_numero(instr->arg1)) strcpy(arg_clean, instr->arg1);
+                else limpar_nome_var(arg_clean, instr->arg1, sizeof(arg_clean));
+
+                if (instr->arg1[0] == '"' || is_str(codegen, arg_clean)) {
+                    fprintf(codegen->arquivo, "printf(\"%%s\\n\", %s);\n", arg_clean);
+                } else {
+                    fprintf(codegen->arquivo, "printf(\"%%d\\n\", %s);\n", arg_clean);
+                }
+            }
+            break;
+        }
+        case INSTR_SCAN: {
+            char result_clean[255];
+            limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
+            imprimirIndentC(codegen);
+
+            if(!is_declared(codegen, result_clean))
+            {
+                fprintf(codegen->arquivo, "int %s; ", result_clean);
+                add_declared(codegen, result_clean);
+            }
+
+            fprintf(codegen->arquivo, "scanf(\"%%d\", &%s);\n", result_clean);
+            break;
+        }
         default:
             break;
     }
@@ -288,8 +475,15 @@ void gerarCodigoC(ListaInstrucoes *codigo_intermediario, CodeGenC *codegen) {
             char func_name[255];
             limpar_nome_var(func_name, atual->resultado, sizeof(func_name));
             
-            // Lookahead para pegar parâmetros
-            fprintf(codegen->arquivo, "int %s(", func_name);
+            Simbolo *s = buscarSimbolo(atual->resultado); 
+            int eh_void = 0;
+            
+            if (s && s->info.funcao.tipoRetorno == T_VOID) {
+                fprintf(codegen->arquivo, "void %s(", func_name);
+                eh_void = 1;
+            } else {
+                fprintf(codegen->arquivo, "int %s(", func_name);
+            }
             
             Instrucao *param = atual->prox;
             int first_param = 1;
@@ -300,7 +494,7 @@ void gerarCodigoC(ListaInstrucoes *codigo_intermediario, CodeGenC *codegen) {
                 limpar_nome_var(param_clean, param->arg1, sizeof(param_clean));
                 
                 fprintf(codegen->arquivo, "int %s", param_clean);
-                add_declared(codegen, param_clean); // Registra que parâmetro já existe
+                add_declared(codegen, param_clean);
                 
                 first_param = 0;
                 param = param->prox;
@@ -308,14 +502,17 @@ void gerarCodigoC(ListaInstrucoes *codigo_intermediario, CodeGenC *codegen) {
             fprintf(codegen->arquivo, ") {\n");
             codegen->indent_level = 1;
             
-            // Gera o corpo da função
-            atual = param; // 'param' parou na primeira instrução que NÃO é PARAM
+            atual = param; 
             
             while (atual && atual->tipo != INSTR_FUNC_END) {
                 if (atual->tipo != INSTR_FUNC_BEGIN) {
                     imprimirInstrucaoC(atual, codegen);
                 }
                 atual = atual->prox;
+            }
+
+            if (!eh_void) {
+                fprintf(codegen->arquivo, "    return 0;\n");
             }
             
             fprintf(codegen->arquivo, "}\n\n");

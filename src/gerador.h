@@ -11,13 +11,18 @@ typedef enum {
     INSTR_UNOP,         // x = op y
     INSTR_LABEL,        // L:
     INSTR_GOTO,         // goto L
+    INSTR_ARR_INIT,     // v = {a, b, c}
+    INSTR_ARR_GET,      // x = v[i]
+    INSTR_ARR_SET,      // v[i] = x
     INSTR_IF_FALSE,     // if_false x goto L
     INSTR_IF_TRUE,      // if_true x goto L
     INSTR_PARAM,        // param x
     INSTR_CALL,         // x = call f, n
     INSTR_RETURN,       // return x
     INSTR_FUNC_BEGIN,   // func_begin f
-    INSTR_FUNC_END      // func_end f
+    INSTR_FUNC_END,      // func_end f
+    INSTR_PRINT, // print x
+    INSTR_SCAN // x = call input
 } TipoInstrucao;
 
 // Instrução de três endereços
@@ -57,7 +62,12 @@ Instrucao* novaInstrucaoIfTrue(const char *cond, int label);
 Instrucao* novaInstrucaoReturn(const char *valor);
 Instrucao* novaInstrucaoFuncBegin(const char *nome);
 Instrucao* novaInstrucaoFuncEnd(const char *nome);
-Instrucao *novaInstrucaoParam(const char *nome);
+Instrucao* novaInstrucaoParam(const char *nome);
+Instrucao* novaInstrucaoPrint(const char *var);
+Instrucao* novaInstrucaoScan(const char *dest);
+Instrucao* novaInstrucaoArrInit(const char *dest, const char *vals);
+Instrucao* novaInstrucaoArrGet(const char *dest, const char *array, const char *index);
+Instrucao* novaInstrucaoArrSet(const char *array, const char *index, const char *val);
 
 // Geração de nomes temporários e labels
 char* novoTemp(ListaInstrucoes *lista);

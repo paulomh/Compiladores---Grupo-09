@@ -14,6 +14,12 @@ typedef struct {
     char **declared_vars;
     int declared_count;
     int declared_size;
+    char **ptr_vars;
+    int ptr_count;
+    int ptr_size;
+    char **str_vars;
+    int str_count;
+    int str_size;
 } CodeGenC;
 
 // Funções principais

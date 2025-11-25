@@ -12,6 +12,7 @@ static const char* tipo_str(Tipo t) {
     switch (t) {
         case T_INT:   return "T_INT";
         case T_FLOAT: return "T_FLOAT";
+        case T_STRING: return "T_STRING";
         case T_ERRO:  return "T_ERRO";
         case T_VOID:  return "T_VOID";
         case T_FUNC:  return "T_FUNC";
@@ -48,6 +49,23 @@ NoAST *novoNoNum(int val)
     no->dir  = NULL;
     no->nome[0] = '\0';
     no->tipo = T_INT;
+    return no;
+}
+
+NoAST *novoNoStr(char *val)
+{
+    NoAST *no = malloc(sizeof(NoAST));
+    if (!no) exit(1);
+    no->op = 0;
+    no->esq = NULL;
+    no->dir = NULL;
+    no->val = 0;
+    if (val) {
+        strncpy(no->nome, val, sizeof(no->nome) - 1);
+        no->nome[sizeof(no->nome) - 1] = '\0';
+        free(val);
+    }
+    no->tipo = T_STRING;
     return no;
 }
 
@@ -149,10 +167,36 @@ NoAST *novoNoAtrib(char *nome, NoAST *expr)
     return no;
 }
 
-// Verificação simples do tipo de retorno de função (stub)
+static Tipo buscarTipoRetornoReal(const NoAST *no) {
+    if (!no) return T_VOID;
+
+    if (no->op == 'R') {
+        if (no->esq) return no->esq->tipo;
+        return T_VOID; 
+    }
+
+    if (no->op == ';') {
+        Tipo tEsq = buscarTipoRetornoReal(no->esq);
+        Tipo tDir = buscarTipoRetornoReal(no->dir);
+        
+        if (tEsq != T_VOID) return tEsq;
+        if (tDir != T_VOID) return tDir;
+    }
+
+    if (no->op == '?' || no->op == ':') {
+        Tipo tDir = buscarTipoRetornoReal(no->dir);
+        if (tDir != T_VOID) return tDir;
+        
+        if (no->op == ':') {
+             Tipo tEsq = buscarTipoRetornoReal(no->esq);
+             if (tEsq != T_VOID) return tEsq;
+        }
+    }
+
+    return T_VOID;
+}
+
 Tipo verificarTipoRetorno(const NoAST *func_body)
-{
-    // Implementação mínima: se não há corpo, VOID; caso exista, assume o tipo do nó
-    if (!func_body) return T_VOID;
-    return func_body->tipo ? func_body->tipo : T_VOID;
+{    
+    return buscarTipoRetornoReal(func_body);
 }

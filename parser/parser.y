@@ -59,7 +59,7 @@ char *nome_funcao_atual = NULL;
 %token EQUALS DIFFROM GTOREQUAL LSOREQUAL INCREMENT DECREMENT INCTIMES DIVBY MODBY EXPONENTIAL INTDIVIDE
 
 // Operadores simples sem valor semântico 
-%token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN COLON SEMICOLON COMMA
+%token DIFFERENT ASSIGNMENT PLUS MINUS TIMES DIVIDE MODULE GREATER LESS LPAREN RPAREN LBRACKET RBRACKET COLON SEMICOLON COMMA
 
 // Indentação
 %token INDENT DEDENT NEWLINE
@@ -81,6 +81,8 @@ char *nome_funcao_atual = NULL;
 %type <no> function_call
 %type <no> argument_list
 %type <no> compound_statement
+%type <no> vector_assignment
+%type <no> while_statement
 
 // Precedência dos operadores (menor para maior)
 %left OR
@@ -113,7 +115,13 @@ program:
 statement_list:
     statement           { $$ = $1; }
     | statement_list statement {
-        $$ = novoNoOp(';', $1, $2);  // Usa ; como operador de sequência
+        if ($2 == NULL) {
+            $$ = $1; // Ignora statement vazio (linha em branco)
+        } else if ($1 == NULL) {
+            $$ = $2;
+        } else {
+            $$ = novoNoOp(';', $1, $2);
+        }
     }
     ;
 
@@ -127,6 +135,7 @@ simple_statement:
     expr               { $$ = $1; }
     | return_statement { $$ = $1; }
     | assignment_statement { $$ = $1; }
+    | vector_assignment { $$ = $1; }
     ;
 
 assignment_statement:
@@ -148,8 +157,17 @@ assignment_statement:
     }
     ;
 
+vector_assignment:
+    IDENTIFIER LBRACKET expr RBRACKET ASSIGNMENT expr {
+        NoAST *id = novoNoId($1, T_INT);
+        NoAST *acesso = novoNoOp('[', id, $3);
+        $$ = novoNoOp('S', acesso, $6);
+    }
+    ;
+
 compound_statement:
     if_statement
+    | while_statement
     | function_definition
    ;
 
@@ -165,6 +183,12 @@ if_statement:
     | IF expr COLON suite ELSE COLON suite {
         NoAST* if_node = novoNoOp('?', $2, $4);
         $$ = novoNoOp(':', if_node, $7);  // : representa ELSE
+    }
+    ;
+
+while_statement:
+    WHILE expr COLON suite {
+        $$ = novoNoOp('W', $2, $4);
     }
     ;
 
@@ -268,12 +292,20 @@ expr:
   | LPAREN expr RPAREN  { $$ = $2; }
   | INT                 { $$ = novoNoNum($1); }
   | FLOAT               { $$ = novoNoNum((int)$1); }  // Temporário até implementar float
+  | STRING { $$ = novoNoStr($1); }
   | IDENTIFIER          { 
         Simbolo *s = buscarSimbolo($1);
         $$ = novoNoId($1, s ? s->tipo : T_INT);
     }
   | MINUS expr %prec UMINUS { $$ = novoNoOp('-', novoNoNum(0), $2); }
   | function_call       { $$ = $1; }
+  | LBRACKET argument_list RBRACKET {
+    $$ = novoNoOp('{', $2, NULL);
+  }
+  | IDENTIFIER LBRACKET expr RBRACKET {
+    NoAST *id = novoNoId($1, T_INT);
+    $$ = novoNoOp('[', id, $3);
+  }
   ;
 
 %%
