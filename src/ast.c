@@ -12,6 +12,7 @@ static const char* tipo_str(Tipo t) {
     switch (t) {
         case T_INT:   return "T_INT";
         case T_FLOAT: return "T_FLOAT";
+        case T_STRING: return "T_STRING";
         case T_ERRO:  return "T_ERRO";
         case T_VOID:  return "T_VOID";
         case T_FUNC:  return "T_FUNC";
@@ -48,6 +49,23 @@ NoAST *novoNoNum(int val)
     no->dir  = NULL;
     no->nome[0] = '\0';
     no->tipo = T_INT;
+    return no;
+}
+
+NoAST *novoNoStr(char *val)
+{
+    NoAST *no = malloc(sizeof(NoAST));
+    if (!no) exit(1);
+    no->op = 0;
+    no->esq = NULL;
+    no->dir = NULL;
+    no->val = 0;
+    if (val) {
+        strncpy(no->nome, val, sizeof(no->nome) - 1);
+        no->nome[sizeof(no->nome) - 1] = '\0';
+        free(val);
+    }
+    no->tipo = T_STRING;
     return no;
 }
 
