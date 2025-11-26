@@ -29,7 +29,7 @@ Este projeto implementa um **compilador funcional para subconjunto Python** com 
 - Operadores aritméticos: `+`, `-`, `*`, `/`, `%`, `^` (exponenciação), `//` (divisão inteira)
 - Operadores comparação: `==`, `!=`, `<`, `>`, `<=`, `>=`
 - Operadores atribuição: `=`, `+=`, `-=`, `*=`, `/=`, `%=`
-- Números inteiros e ponto flutuante
+- Números inteiros e ponto flutuante (parcial, conversão para int no parser)
 - Strings com delimitadores simples/duplos
 - Comentários com `#`
 - Gerenciamento completo de indentação (INDENT/DEDENT)
