@@ -23,13 +23,76 @@ Este projeto implementa um **compilador funcional para subconjunto Python** com 
 
 ## Funcionalidades Implementadas
 
-- **Análise Léxica**: Reconhecimento completo de tokens Python usando Flex
-- **Análise Sintática**: Parser funcional com gramática Python usando Bison  
-- **Avaliação de Expressões**: Cálculo de expressões aritméticas e lógicas
-- **Indentação Python**: Gerenciamento de INDENT/DEDENT
-- **Estruturas de Controle**: Parsing de if/else, funções, loops
-- **Análise Semântica**: Em desenvolvimento
-- **Geração de Código**: Planejado
+### Análise Léxica 
+- Reconhecimento completo de tokens Python usando Flex
+- Suporte a palavras-chave: `if`, `else`, `while`, `for`, `def`, `return`, `and`, `or`, `not`
+- Operadores aritméticos: `+`, `-`, `*`, `/`, `%`, `^` (exponenciação), `//` (divisão inteira)
+- Operadores comparação: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- Operadores atribuição: `=`, `+=`, `-=`, `*=`, `/=`, `%=`
+- Números inteiros e ponto flutuante
+- Strings com delimitadores simples/duplos
+- Comentários com `#`
+- Gerenciamento completo de indentação (INDENT/DEDENT)
+
+### Análise Sintática
+- Parser funcional com gramática Python usando Bison
+- Expressões aritméticas com precedência correta
+- Expressões lógicas (and, or, not)
+- Estruturas condicionais (if/else)
+- Estruturas de repetição (while)
+- Definição de funções com parâmetros e retorno
+- Chamadas de função
+- Tratamento de indentação Python
+
+### Árvore Sintática Abstrata - AST 
+- Construção completa da AST
+- Tipos de nós: operador (BINOP), unário (UNOP), identificador (ID), número (NUM), string (STR)
+- Operadores especiais: atribuição, condicional, loop, chamada de função
+- Suporte a operadores unários (negação, not)
+- Impressão formatada da AST
+
+### Tabela de Símbolos
+- Gerenciamento completo de símbolos
+- Controle de escopo (local/global)
+- Suporte a múltiplos tipos: `INT`, `FLOAT`, `STRING`, `FUNC`, `VOID`
+- Detecção de redeclarações
+- Gerenciamento de funções com parâmetros e tipo de retorno
+- Verificação de tipos em atribuições
+
+### Análise Semântica
+- Verificação de tipos
+- Validação de compatibilidade em operações
+- Propagação de tipos
+- Detecção de variáveis indefinidas
+- Verificação de argumentos em chamadas de função
+
+### Geração de Código Intermediário
+- Geração de código de três endereços
+- Instruções intermediárias: assign, binop, unop, label, goto, if_false, if_true
+- Gerenciamento de temporários
+- Suporte a arrays/vetores
+- Chamadas de função e retorno
+
+### Geração de Código C
+- Geração de código C sintaticamente válido
+- Conversão de AST para C
+- Suporte a estruturas de controle em C
+- Gerenciamento de variáveis e tipos
+
+### Sistema de Testes 
+- 48 testes em 7 categorias
+- Testes de AST (10 testes)
+- Testes de condicionais (3 testes)
+- Testes de detecção de erros (4 testes)
+- Testes gerais (11 testes)
+- Testes de símbolos (10 testes)
+- Testes de integração (10 testes)
+
+### Build & Tooling
+- Makefile com regras de compilação automática
+- Scripts de teste por categoria
+- Suporte a compilação Flex + Bison integrados
+- Sistema de limpeza de artefatos
 
 ## Equipe de Desenvolvimento
 
@@ -39,9 +102,10 @@ Este projeto implementa um **compilador funcional para subconjunto Python** com 
 
 ## Documentação Disponível
 
-- **[Características Técnicas](Docs/Caracteristicas%20Tecnicas.md)**: Especificações técnicas detalhadas da implementação
-- **[Configuração do Ambiente](Docs/Configuracao%20Ambiente.md)**: Guia completo de setup e instalação  
-- **[Guia de Contribuição](CONTRIBUTING.md)**: Workflow e padrões de desenvolvimento específicos para compiladores
+- **[Características Técnicas](Docs/Caracteristicas%20Tecnicas.md)**: Especificações detalhadas de arquitetura, build e testes
+- **[Configuração do Ambiente](Docs/Configuracao%20Ambiente.md)**: Guia de instalação e setup
+- **[Testes](Docs/Testes.md)**: Documentação completa do sistema de testes (48 testes, 7 categorias)
+- **[Guia de Contribuição](CONTRIBUTING.md)**: Workflow de desenvolvimento e padrões de commits
 
 ## Como Contribuir
 
