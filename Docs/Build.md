@@ -82,25 +82,22 @@ make help
 
 ### `compilar.sh` - Compilação Automática
 
+O projeto utiliza **Makefile** para compilação automática. O script `compilar.sh` é legado e não é mais necessário.
+
+**Para compilar, use simplesmente:**
 ```bash
-#!/bin/bash
-echo "Compilando Compilador - Grupo 09"
-
-# Limpeza
-rm -f *.o compilador
-
-# Compilação em etapas
-flex lexer/lexer.l
-bison -d -v -o parser.tab.c parser/parser.y
-gcc -Wall -Wextra -std=c99 -c lex.yy.c -o lex.yy.o
-gcc -Wall -Wextra -std=c99 -c parser.tab.c -o parser.tab.o  
-gcc -Wall -Wextra -std=c99 -c src/main.c -o src/main.o
-gcc -Wall -Wextra -std=c99 -o compilador lex.yy.o parser.tab.o src/main.o -lfl
+make
 ```
+
+**Isto executa automaticamente:**
+1. Flex para gerar `lex.yy.c`
+2. Bison para gerar `parser.tab.c` e `parser.tab.h`
+3. Compila todos os arquivos: `src/ast.c`, `src/tabela.c`, `src/gerador.c`, `src/codegen_c.c`, `src/main.c`
+4. Linka todos os objetos com `-lfl`
 
 ### Scripts de Teste
 
-O projeto possui uma suíte completa de testes organizada em 6 categorias com 48 testes no total.
+O projeto possui uma suíte completa de testes organizada em 7 categorias com 48 testes no total.
 
 **Localização:** `tests/scripts/`
 
@@ -112,6 +109,7 @@ O projeto possui uma suíte completa de testes organizada em 6 categorias com 48
 - `test_category_general.sh` - Testes gerais e básicos (11 testes)
 - `test_category_symbol.sh` - Testes de tabela de símbolos (10 testes)
 - `test_category_integration.sh` - Testes de integração AST + Símbolos (10 testes)
+- `test_category_codegen.sh` - Testes de geração de código 
 
 **Executar testes:**
 ```bash
@@ -144,14 +142,18 @@ bison -d -v -o parser.tab.c parser/parser.y
 
 ### Etapa 3: Compilação dos Objetos
 ```bash
-gcc -Wall -Wextra -std=c99 -c lex.yy.c -o lex.yy.o
-gcc -Wall -Wextra -std=c99 -c parser.tab.c -o parser.tab.o
-gcc -Wall -Wextra -std=c99 -c src/main.c -o src/main.o
+gcc -Wall -Wextra -std=gnu99 -c lex.yy.c -o lex.yy.o
+gcc -Wall -Wextra -std=gnu99 -c parser.tab.c -o parser.tab.o
+gcc -Wall -Wextra -std=gnu99 -c src/main.c -o src/main.o
+gcc -Wall -Wextra -std=gnu99 -c src/ast.c -o src/ast.o
+gcc -Wall -Wextra -std=gnu99 -c src/tabela.c -o src/tabela.o
+gcc -Wall -Wextra -std=gnu99 -c src/gerador.c -o src/gerador.o
+gcc -Wall -Wextra -std=gnu99 -c src/codegen_c.c -o src/codegen_c.o
 ```
 
 ### Etapa 4: Linkagem
 ```bash
-gcc -Wall -Wextra -std=c99 -o compilador lex.yy.o parser.tab.o src/main.o -lfl
+gcc -Wall -Wextra -std=gnu99 -o compilador lex.yy.o parser.tab.o src/main.o src/ast.o src/tabela.o src/gerador.o src/codegen_c.o -lfl
 ```
 
 ## Configurações do Makefile
@@ -159,12 +161,15 @@ gcc -Wall -Wextra -std=c99 -o compilador lex.yy.o parser.tab.o src/main.o -lfl
 ### Variáveis
 
 ```makefile
-CC = gcc                    # Compilador C
-CFLAGS = -Wall -Wextra -std=c99  # Flags de compilação
-LEX = flex                  # Gerador léxico
-YACC = bison               # Gerador sintático
-YFLAGS = -d -v             # Flags do Bison
-TARGET = compilador        # Nome do executável
+CC = gcc                           # Compilador C
+CFLAGS = -Wall -Wextra -std=gnu99  # Flags de compilação
+LEX = flex                         # Gerador léxico
+YACC = bison                       # Gerador sintático
+YFLAGS = -d -v                     # Flags do Bison
+TARGET = compilador                # Nome do executável
+
+# Objetos compilados
+OBJECTS = lex.yy.o parser.tab.o src/main.o src/ast.o src/tabela.o src/gerador.o src/codegen_c.o
 ```
 
 ### Dependências
@@ -255,6 +260,7 @@ make clean && make && bash tests/scripts/test_category_all.sh
 # [OK] GERAIS: SUCESSO
 # [OK] SÍMBOLOS: SUCESSO
 # [OK] INTEGRAÇÃO: SUCESSO
+# [OK] GERAÇÃO DE CÓDIGO: SUCESSO
 # Resultado: Todos os testes passaram com sucesso.
 ```
 
