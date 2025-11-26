@@ -51,6 +51,7 @@ $(PARSER_C) $(PARSER_H): $(PARSER_SRC)
 clean:
 	@rm -f $(LEXER_C) $(PARSER_C) $(PARSER_H) *.o src/*.o $(TARGET) test_ast
 	@rm -f parser.output
+	@rm -rf tests/c tests/bitcode
 	@echo "🧹 Arquivos de compilação removidos"
 
 # Executar o compilador
