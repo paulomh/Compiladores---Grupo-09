@@ -111,8 +111,8 @@ static int eh_numero(const char *str) {
 static void limpar_nome_var(char *dest, const char *src, size_t max) {
     if (!src) return;
     
-    int j = 0;
-    for (int i = 0; src[i] && j < max - 1; i++) {
+    size_t j = 0;
+    for (size_t i = 0; src[i] && j < max - 1; i++) {
         if (isalnum(src[i]) || src[i] == '_') {
             dest[j++] = src[i];
         }
@@ -179,7 +179,7 @@ static void add_str(CodeGenC *codegen, const char *name) {
 void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
     if (!codegen || !instr) return;
     
-    char var_temp[255], arg1_clean[255], arg2_clean[255];
+    char arg1_clean[255], arg2_clean[255];
     
     switch (instr->tipo) {
         case INSTR_PARAM:

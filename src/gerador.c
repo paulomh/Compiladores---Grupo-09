@@ -382,7 +382,8 @@ static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
         Instrucao *instr = alocarInstrucao(INSTR_CALL);
         SAFE_STRCPY(instr->resultado, temp_dest);
         SAFE_STRCPY(instr->arg1, nome_func);
-        SAFE_STRCPY(instr->arg2, args_buffer); 
+        strncpy(instr->arg2, args_buffer, sizeof(instr->arg2) - 1);
+        instr->arg2[sizeof(instr->arg2) - 1] = '\0';
         
         adicionarInstrucao(lista, instr);
         return resultado_atual;
