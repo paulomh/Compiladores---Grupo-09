@@ -47,6 +47,9 @@ make run
 # Teste básico
 make test
 
+# Executar suíte completa de testes (48 testes em 7 categorias)
+make test-all
+
 # Criar arquivo de exemplo
 make example
 
@@ -65,6 +68,12 @@ make help
 |--------|-----------|-----|
 | `all` | Compila o compilador completo | `make all` |
 | `clean` | Remove todos os arquivos gerados, incluindo testes | `make clean` |
+| `test` | Executa teste básico com entrada padrão | `make test` |
+| `test-all` | Executa suíte completa (48 testes, 7 categorias) | `make test-all` |
+| `run` | Executa o compilador | `make run` |
+| `example` | Cria arquivo de exemplo Python | `make example` |
+| `run-example` | Compila e executa com exemplo | `make run-example` |
+| `help` | Mostra ajuda de comandos | `make help` |
 | `$(TARGET)` | Compila apenas o executável | `make compilador` |
 
 ### Arquivos Gerados
@@ -225,11 +234,11 @@ make --debug=basic
 # Compilar tudo
 make clean && make
 
-# Compilar e testar
-make clean && make && bash tests/scripts/test_category_all.sh
+# Compilar e testar (suíte completa)
+make clean && make && make test-all
 
 # Apenas recompilar e testar
-make && bash tests/scripts/test_category_all.sh
+make && make test-all
 
 # Testar categoria específica
 make && bash tests/scripts/test_category_ast.sh
@@ -237,6 +246,30 @@ make && bash tests/scripts/test_category_ast.sh
 # Compilar e executar teste individual
 make && ./compilador tests/files/ast_binop.py
 ```
+
+### Executando Suíte de Testes
+
+O comando `make test-all` executa a suíte completa de testes:
+
+```bash
+# Opção 1: Compilar e testar (recomendado para desenvolvimento)
+make clean && make && make test-all
+
+# Opção 2: Apenas testar (sem recompilar)
+make test-all
+
+# Opção 3: Teste individual (sem compilar)
+./compilador tests/files/ast_binop.py
+```
+
+**Categorias testadas:**
+- AST (10 testes)
+- Condicionais (3 testes)
+- Erros (4 testes)
+- Gerais (11 testes)
+- Símbolos (10 testes)
+- Integração (10 testes)
+- Geração de Código (48 testes: Bitcode + C)
 
 ### Automação
 
@@ -253,7 +286,7 @@ done
 
 ```bash
 # Limpar, compilar, todos os testes
-make clean && make && bash tests/scripts/test_category_all.sh
+make clean && make && make test-all
 
 # Se tudo passou, você verá:
 # [OK] AST: SUCESSO
@@ -264,6 +297,12 @@ make clean && make && bash tests/scripts/test_category_all.sh
 # [OK] INTEGRAÇÃO: SUCESSO
 # [OK] GERAÇÃO DE CÓDIGO: SUCESSO
 # Resultado: Todos os testes passaram com sucesso.
+```
+
+**No Windows (PowerShell com WSL):**
+
+```powershell
+wsl -d Ubuntu bash -lc 'cd "/mnt/c/caminho/do/projeto" && make clean && make && make test-all'
 ```
 
 ## Estrutura de Build

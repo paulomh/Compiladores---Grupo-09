@@ -63,6 +63,10 @@ test: $(TARGET)
 	@echo "Testando com entrada padrão..."
 	@echo "x = 10 + 5" | ./$(TARGET)
 
+# Executar suíte completa de testes
+test-all: $(TARGET)
+	@bash tests/scripts/test_category_all.sh
+
 # Criar arquivo de exemplo
 example:
 	@echo "x = 10 + 5" > exemplo.txt
@@ -82,6 +86,7 @@ help:
 	@echo "  make clean    - Limpar arquivos gerados"
 	@echo "  make run      - Executar o compilador"
 	@echo "  make test     - Testar com entrada padrão"
+	@echo "  make test-all - Executar suíte completa de testes (48 testes)"
 	@echo "  make example  - Criar arquivo de exemplo"
 	@echo "  make run-example - Executar com arquivo de exemplo"
 	@echo "  make help     - Mostrar esta ajuda"
@@ -121,4 +126,4 @@ test_ast: src/test_ast.c src/ast.c src/ast.h
 run_test_ast: test_ast
 	./test_ast
 
-.PHONY: all clean run test example run-example help test_ast run_test_ast
+.PHONY: all clean run test test-all example run-example help test_ast run_test_ast
