@@ -54,7 +54,21 @@ int main(int argc, char *argv[])
             if (argc > 1)
             {
                 char output_file[512];
-                snprintf(output_file, sizeof(output_file), "%s.c", argv[1]);
+                const char *infile = argv[1];
+                const char *baseptr = infile;
+                const char *p1 = strrchr(infile, '/');
+                const char *p2 = strrchr(infile, '\\');
+                if (p1 && p2) baseptr = (p1 > p2) ? p1 + 1 : p2 + 1;
+                else if (p1) baseptr = p1 + 1;
+                else if (p2) baseptr = p2 + 1;
+
+                char basecpy[256];
+                strncpy(basecpy, baseptr, sizeof(basecpy) - 1);
+                basecpy[sizeof(basecpy) - 1] = '\0';
+                char *dot = strrchr(basecpy, '.');
+                if (dot) *dot = '\0';
+
+                snprintf(output_file, sizeof(output_file), "%s.c", basecpy);
                 CodeGenC *codegen = criarCodeGenC(output_file);
                 gerarCodigoC(codigo, codegen);
                 liberarCodeGenC(codegen);

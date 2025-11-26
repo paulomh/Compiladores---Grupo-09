@@ -68,14 +68,14 @@ run_test "tests/files/comment_basic.py" "Comentarios" "success"
 run_test "tests/files/expr_basic.py" "Expressoes" "success"
 run_test "tests/files/func_basic.py" "Funcoes" "success"
 run_test "tests/files/indent_deep.py" "Indentacao" "success"
-run_test "tests/files/mixed_complete.py" "CCodigo misto" "success"
+run_test "tests/files/mixed_complete.py" "Codigo misto" "success"
 
 echo
 echo "--- Testes Integrados ---"
 run_test "tests/files/test_simple.py" "Teste simples" "success"
 run_test "tests/files/test_ast_table.py" "AST com tabela" "success"
 run_test "tests/files/test_symbol_table.py" "Tabela de simbolos" "success"
-run_test "tests/files/test_escopo_tipos.py" "Escopo e tipos" "error"
+run_test "tests/files/test_escopo_tipos.py" "Escopo e tipos" "success"
 run_test "tests/files/test_tipos_retorno.py" "Tipos de retorno" "error"
 
 echo
