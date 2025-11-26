@@ -45,10 +45,12 @@ Este documento descreve as especificações técnicas do compilador Python desen
 ```
 ./
 ├── Docs/                       # Documentação do projeto
+│   ├── Build.md                # Sistema de build detalhado
 │   ├── Caracteristicas Tecnicas.md
 │   ├── Configuracao Ambiente.md
 │   ├── Definicoes Projeto.md
-│   └── Guia - Projeto de um compilador.md
+│   ├── Guia - Projeto de um compilador.md
+│   └── Testes.md               # Sistema de testes completo (48 testes, 7 categorias)
 ├── lexer/
 │   └── lexer.l                 # Analisador léxico (Flex)
 ├── parser/
@@ -58,6 +60,10 @@ Este documento descreve as especificações técnicas do compilador Python desen
 │   ├── ast.h                   # Árvore sintática (header)
 │   ├── tabela.c                # Tabela de símbolos (implementação)
 │   ├── tabela.h                # Tabela de símbolos (header)
+│   ├── gerador.c               # Gerador de código intermediário
+│   ├── gerador.h               # Gerador de código intermediário (header)
+│   ├── codegen_c.c             # Gerador de código C
+│   ├── codegen_c.h             # Gerador de código C (header)
 │   └── main.c                  # Programa principal
 ├── tests/
 │   ├── files/                  # Casos de teste
@@ -74,7 +80,7 @@ Este documento descreve as especificações técnicas do compilador Python desen
 
 ```makefile
 CC = gcc
-CFLAGS = -Wall -Wextra -std=c99
+CFLAGS = -Wall -Wextra -std=gnu99
 LEX = flex
 YACC = bison
 YFLAGS = -d -v
@@ -83,6 +89,10 @@ TARGET = compilador
 LEXER_SRC = lexer/lexer.l
 PARSER_SRC = parser/parser.y
 MAIN_SRC = src/main.c
+AST_SRC = src/ast.c
+TABELA_SRC = src/tabela.c
+GERADOR_SRC = src/gerador.c
+CODEGEN_C_SRC = src/codegen_c.c
 ```
 
 ### Comandos Disponíveis
@@ -101,7 +111,7 @@ make help         # Mostrar ajuda
 
 ### Organização de Testes
 
-A suíte de testes é organizada em **6 categorias funcionais** com um total de **48 testes**:
+A suíte de testes é organizada em **7 categorias funcionais** com um total de **48 testes**:
 
 | Categoria | Testes | Descrição |
 |-----------|--------|-----------|
@@ -111,23 +121,25 @@ A suíte de testes é organizada em **6 categorias funcionais** com um total de 
 | Gerais | 11 | Funcionalidades básicas do compilador |
 | Símbolos | 10 | Gerenciamento da tabela de símbolos |
 | Integração | 10 | Integração AST + Tabela de Símbolos |
+| Geração de Código | - | Geração de Bitcode e código C |
 
 ### Scripts de Teste Disponíveis
 
 ```
 tests/scripts/
 ├── test_category_all.sh              # Master script (executa todas as categorias)
-├── test_category_ast.sh              # Testes de AST
-├── test_category_conditional.sh      # Testes de condicionais
-├── test_category_error.sh            # Testes de erros
-├── test_category_general.sh          # Testes gerais
-├── test_category_symbol.sh           # Testes de símbolos
-└── test_category_integration.sh      # Testes de integração
+├── test_category_ast.sh              # Testes de AST (10 testes)
+├── test_category_conditional.sh      # Testes de condicionais (3 testes)
+├── test_category_error.sh            # Testes de erros (4 testes)
+├── test_category_general.sh          # Testes gerais (11 testes)
+├── test_category_symbol.sh           # Testes de símbolos (10 testes)
+├── test_category_integration.sh      # Testes de integração (10 testes)
+└── test_category_codegen.sh          # Testes de geração de código (gera os arquivos em .bt e .c de todas as categorias)
 ```
 
 ### Arquivos de Teste
 
-45 arquivos de teste localizados em `tests/files/`:
+48 arquivos de teste localizados em `tests/files/`:
 - 10 arquivos para AST (`ast_*.py`)
 - 3 arquivos para condicionais (`conditional_*.py`)
 - 4 arquivos para erros (`error_*.py`)
@@ -186,6 +198,7 @@ make clean && make && bash tests/scripts/test_category_all.sh
 # [OK] GERAIS: SUCESSO
 # [OK] SÍMBOLOS: SUCESSO
 # [OK] INTEGRAÇÃO: SUCESSO
+# [OK] GERAÇÃO DE CÓDIGO: SUCESSO
 # Resultado: Todos os testes passaram com sucesso.
 ```
 

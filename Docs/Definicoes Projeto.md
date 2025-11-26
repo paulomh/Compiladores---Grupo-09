@@ -16,7 +16,10 @@
   - [ETAPA 5: CONSTRUÇÃO DA AST](#etapa-5-construção-da-ast)
   - [ETAPA 6: INICIALIZAÇÃO E EXECUÇÃO](#etapa-6-inicialização-e-execução)
   - [ETAPA 7: SISTEMA DE BUILD](#etapa-7-sistema-de-build)
-  - [ETAPA 8: TRATAMENTO DE ERROS](#etapa-8-tratamento-de-erros)
+  - [ETAPA 8: GERAÇÃO DE CÓDIGO INTERMEDIÁRIO](#etapa-8-geração-de-código-intermediário)
+  - [ETAPA 9: GERAÇÃO DE CÓDIGO C](#etapa-9-geração-de-código-c)
+  - [ETAPA 10: TRATAMENTO DE ERROS](#etapa-10-tratamento-de-erros)
+  - [ETAPA 11: PIPELINE DE COMPILAÇÃO COMPLETO](#etapa-11-pipeline-de-compilação-completo)
 - [Exemplos de Uso](#exemplos-de-uso)
 
 ---
@@ -50,33 +53,76 @@ Token Stream
 
 ## Funcionalidades Implementadas
 
-### Análise Léxica Avançada
-- **Números**: Suporta inteiros e floats com sinais opcionais
-- **Strings**: Detecta strings com aspas simples ou duplas
-- **Comentários**: Remove comentários simples (`#`) e compostos (`"""` ou `'''`)
-- **Identificadores**: Valida identificadores Python com `_` e números
-- **Operadores**: 28+ operadores incluindo comparação (`==`, `!=`), atribuição (`+=`, `-=`) e potência (`**`)
-- **Palavras-chave**: 10 palavras-chave Python (`if`, `else`, `def`, `return`, `while`, `for`, `and`, `or`, `not`, `is`, `in`, `pass`)
+### Análise Léxica 
+- Reconhecimento completo de tokens Python usando Flex
+- Suporte a palavras-chave: `if`, `else`, `while`, `for`, `def`, `return`, `and`, `or`, `not`
+- Operadores aritméticos: `+`, `-`, `*`, `/`, `%`, `^` (exponenciação), `//` (divisão inteira)
+- Operadores comparação: `==`, `!=`, `<`, `>`, `<=`, `>=`
+- Operadores atribuição: `=`, `+=`, `-=`, `*=`, `/=`, `%=`
+- Números inteiros e ponto flutuante
+- Strings com delimitadores simples/duplos
+- Comentários com `#`
+- Gerenciamento completo de indentação (INDENT/DEDENT)
 
-### Gerenciamento de Indentação
-- **Pilha de Indentação**: Estrutura `stack` com máximo de 100 níveis
-- **Tokens INDENT/DEDENT**: Gera corretamente com `dedent_line` para múltiplos DEDENTs
-- **Estados Flex**: Usa `INDENT_STATE` após newlines para análise específica
-- **Validação**: Detecta erros de indentação inconsistente
-- **EOF Handling**: Insere `DEDENT`s automaticamente no fim do arquivo
+### Análise Sintática
+- Parser funcional com gramática Python usando Bison
+- Expressões aritméticas com precedência correta
+- Expressões lógicas (and, or, not)
+- Estruturas condicionais (if/else)
+- Estruturas de repetição (while)
+- Definição de funções com parâmetros e retorno
+- Chamadas de função
+- Tratamento de indentação Python
 
-### Análise Sintática com AST
-- **Árvore Sintática**: Construção completa de AST via funções em `ast.c`
-- **Suporte a Estruturas**: `if`/`else`, funções (`def`), parâmetros, retorno
-- **Expressões Complexas**: Precedência correta de operadores (16 níveis)
-- **Verificação de Tipos**: Sistema de 7 tipos (`T_INT`, `T_FLOAT`, `T_STRING`, `T_FUNC`, `T_VOID`, `T_ERRO`, etc.)
+### Árvore Sintática Abstrata - AST 
+- Construção completa da AST
+- Tipos de nós: operador (BINOP), unário (UNOP), identificador (ID), número (NUM), string (STR)
+- Operadores especiais: atribuição, condicional, loop, chamada de função
+- Suporte a operadores unários (negação, not)
+- Impressão formatada da AST
 
-### Tabela de Símbolos e Escopo
-- **Tabela Global**: Registra variáveis e funções
-- **Funções**: Armazena nome, tipo de retorno e parâmetros
-- **Parâmetros**: Suporta parâmetros com valores padrão
-- **Escopo**: Função `finalizarEscopo()` fecha escopo após definição
-- **Verificação Semântica**: Detecta variáveis não declaradas
+### Tabela de Símbolos
+- Gerenciamento completo de símbolos
+- Controle de escopo (local/global)
+- Suporte a múltiplos tipos: `INT`, `FLOAT`, `STRING`, `FUNC`, `VOID`
+- Detecção de redeclarações
+- Gerenciamento de funções com parâmetros e tipo de retorno
+- Verificação de tipos em atribuições
+
+### Análise Semântica
+- Verificação de tipos
+- Validação de compatibilidade em operações
+- Propagação de tipos
+- Detecção de variáveis indefinidas
+- Verificação de argumentos em chamadas de função
+
+### Geração de Código Intermediário
+- Geração de código de três endereços
+- Instruções intermediárias: assign, binop, unop, label, goto, if_false, if_true
+- Gerenciamento de temporários
+- Suporte a arrays/vetores
+- Chamadas de função e retorno
+
+### Geração de Código C
+- Geração de código C sintaticamente válido
+- Conversão de AST para C
+- Suporte a estruturas de controle em C
+- Gerenciamento de variáveis e tipos
+
+### Sistema de Testes 
+- 48 testes em 7 categorias
+- Testes de AST (10 testes)
+- Testes de condicionais (3 testes)
+- Testes de detecção de erros (4 testes)
+- Testes gerais (11 testes)
+- Testes de símbolos (10 testes)
+- Testes de integração (10 testes)
+
+### Build & Tooling
+- Makefile com regras de compilação automática
+- Scripts de teste por categoria
+- Suporte a compilação Flex + Bison integrados
+- Sistema de limpeza de artefatos
 
 ## Especificações Técnicas Implementadas
 
@@ -232,7 +278,7 @@ Esta tabela define todas as regras de funcionamento implementadas no compilador,
 | Local | Regra de Funcionamento | Demostração |
 |-------|----------------------------------|----------------------------|
 | `parser/parser.y:168-172` | Identificador com busca de símbolo | `IDENTIFIER` → `buscarSimbolo($1)` → Retorna tipo ou erro |
-| `parser/parser.y:173` | Menos unário | `MINUS expr %prec UMINUS` → `novoNoOp('-', novoNoNum(0), $2)` |
+| `parser/parser.y:300` | Menos unário | `MINUS expr %prec UMINUS` → `novoNoOp('-', $2, NULL)` → Nó AST unário com `-` |
 | `parser/parser.y:174` | Chamada de função | `IDENTIFIER LPAREN argument_list RPAREN` → `novoNoOp('C', novoNoId($1), $3)` |
 
 ### ETAPA 5: CONSTRUÇÃO DA AST (src/ast.c e src/tabela.c)
@@ -264,7 +310,7 @@ Esta tabela define todas as regras de funcionamento implementadas no compilador,
 #### 7.1 Makefile
 | Local | Regra de Funcionamento | Demostração |
 |-------|----------------------------------|----------------------------|
-| `Makefile:4-8` | Variáveis de compilação | `CC = gcc`, `CFLAGS = -Wall -Wextra -std=c99` |
+| `Makefile:4-8` | Variáveis de compilação | `CC = gcc`, `CFLAGS = -Wall -Wextra -std=gnu99` |
 | `Makefile:27` | Target principal | `all: $(TARGET)` → Compila tudo |
 | `Makefile:30-32` | Compilação do executável | `$(CC) $(CFLAGS) -o $(TARGET) $(OBJECTS) -lfl` |
 | `Makefile:35-36` | Geração do lexer | `$(LEX) $(LEXER_SRC)` → `lex.yy.c` |
@@ -280,15 +326,164 @@ Esta tabela define todas as regras de funcionamento implementadas no compilador,
 | `compilar.sh:18-20` | Compilação de objetos | `gcc -c` para cada arquivo `.c` |
 | `compilar.sh:23` | Linkagem final | `gcc -o compilador *.o -lfl` |
 
-### ETAPA 8: TRATAMENTO DE ERROS
+### ETAPA 8: GERAÇÃO DE CÓDIGO INTERMEDIÁRIO (src/gerador.c e src/gerador.h)
 
-#### 8.1 Erros Detectados
+#### 8.1 Estrutura de Dados - Instruções de Três Endereços
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/gerador.h:9-25` | Enum de tipos de instrução | `INSTR_ASSIGN`, `INSTR_BINOP`, `INSTR_UNOP`, `INSTR_LABEL`, `INSTR_GOTO`, `INSTR_IF_FALSE`, `INSTR_IF_TRUE`, etc. |
+| `src/gerador.h:27-38` | Estrutura de instrução | `tipo`, `resultado`, `arg1`, `arg2`, `op`, `label`, `prox` |
+| `src/gerador.h:40-46` | Lista de instruções | `inicio`, `fim`, `contador_temp`, `contador_label` |
+
+#### 8.2 Gerenciamento de Memória
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/gerador.c:42-50` | Criação de lista | `criarListaInstrucoes()` → Aloca e inicializa estrutura |
+| `src/gerador.c:52-63` | Liberação de memória | `liberarListaInstrucoes()` → Libera cadeia de instruções |
+| `src/gerador.c:65-74` | Geração de temporários | `novoTemp()` → Retorna nomes `t0`, `t1`, `t2`, ... |
+| `src/gerador.c:76-79` | Geração de labels | `novoLabel()` → Retorna números sequenciais `L0`, `L1`, ... |
+
+#### 8.3 Adição de Instruções
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/gerador.c:81-97` | Adicionar instrução à lista | `adicionarInstrucao()` → Encadeia na lista vinculada |
+| `src/gerador.c:99-112` | Criar instrução ASSIGN | `novaInstrucaoAssign()` → Instrução de atribuição simples |
+| `src/gerador.c:114-127` | Criar instrução BINOP | `novaInstrucaoBinop()` → Operação binária (dest = arg1 op arg2) |
+| `src/gerador.c:129-140` | Criar instrução UNOP | `novaInstrucaoUnop()` → Operação unária (dest = op arg) |
+| `src/gerador.c:142-148` | Criar instrução LABEL | `novaInstrucaoLabel()` → Marca posição no código |
+| `src/gerador.c:150-155` | Criar instrução GOTO | `novaInstrucaoGoto()` → Salto incondicional para label |
+| `src/gerador.c:157-162` | Criar instrução IF_FALSE | `novaInstrucaoIfFalse()` → Salto condicional (se falso) |
+| `src/gerador.c:164-169` | Criar instrução RETURN | `novaInstrucaoReturn()` → Retorno de função |
+
+#### 8.4 Geração de Código Intermediário da AST
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/gerador.c:171-180` | Função principal de geração | `gerarCodigoIntermediario()` → Traduz AST para código intermediário |
+| `src/gerador.c:182-250` | Processamento recursivo de expressões | `gerarCodigoExpr()` → Gera instruções para cada nó AST |
+| `src/gerador.c:252-300` | Tratamento de operações binárias | `BINOP` → Aloca temporário + cria `INSTR_BINOP` |
+| `src/gerador.c:302-320` | Tratamento de operações unárias | `UNOP` → Aloca temporário + cria `INSTR_UNOP` |
+| `src/gerador.c:322-340` | Tratamento de identificadores | `ID` → Retorna nome da variável |
+| `src/gerador.c:342-350` | Tratamento de números | `NUM` → Converte valor para string |
+| `src/gerador.c:352-360` | Tratamento de strings | `STR` → Registra string constante |
+
+#### 8.5 Impressão de Código Intermediário
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/gerador.c:362-400` | Função de impressão | `imprimirCodigoIntermediario()` → Lista todas instruções com índices |
+| `src/gerador.c:402-450` | Formatação de instrução | `imprimirInstrucao()` → Converte instrução para formato legível |
+
+### ETAPA 9: GERAÇÃO DE CÓDIGO C (src/codegen_c.c e src/codegen_c.h)
+
+#### 9.1 Estrutura de Dados - Gerador de Código C
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/codegen_c.h:8-24` | Estrutura CodeGenC | `arquivo`, `indent_level`, `label_counter` |
+| `src/codegen_c.h:9` | Tracking de variáveis declaradas | `declared_vars[]` → Evita redeclarações |
+| `src/codegen_c.h:10` | Tracking de ponteiros (arrays) | `ptr_vars[]` → Gerencia vetores |
+| `src/codegen_c.h:11` | Tracking de strings | `str_vars[]` → Controla constantes de string |
+
+#### 9.2 Inicialização e Liberação
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/codegen_c.c:4-37` | Criação do gerador | `criarCodeGenC()` → Abre arquivo C, aloca estruturas |
+| `src/codegen_c.c:39-70` | Liberação do gerador | `liberarCodeGenC()` → Fecha arquivo, libera todas listas |
+| `src/codegen_c.c:72-87` | Reinicialização de declarações | `reiniciarDeclaracoes()` → Limpa listas entre funções |
+
+#### 9.3 Formatação de Código C
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/codegen_c.c:89-96` | Impressão de indentação | `imprimirIndentC()` → Adiciona espaços baseado em `indent_level` |
+| `src/codegen_c.c:98-102` | Validação de número | `eh_numero()` → Diferencia literais de identificadores |
+| `src/codegen_c.c:104-150` | Conversão de tipo | `converterTipoCodigo()` → `T_INT` → `int`, `T_STRING` → `char*` |
+
+#### 9.4 Gerenciamento de Declarações
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/codegen_c.c:152-180` | Verificar se declarada | `jaDeclarada()` → Evita redeclarações duplicadas |
+| `src/codegen_c.c:182-210` | Registrar variável | `registrarVariavel()` → Adiciona à lista de declaradas |
+| `src/codegen_c.c:212-240` | Registrar vetor | `registrarVetor()` → Controla ponteiros |
+| `src/codegen_c.c:242-260` | Registrar string | `registrarString()` → Mantém strings únicas |
+
+#### 9.5 Geração de Instruções C
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/codegen_c.c:262-310` | Função principal de geração | `gerarCodigoC()` → Traduz código intermediário para C |
+| `src/codegen_c.c:312-350` | Impressão de instrução | `imprimirInstrucaoC()` → Converte tipo de instrução para código C |
+| `src/codegen_c.c:352-400` | Tratamento de ASSIGN | `INSTR_ASSIGN` → `dest = fonte;` |
+| `src/codegen_c.c:402-450` | Tratamento de BINOP | `INSTR_BINOP` → `dest = arg1 op arg2;` |
+| `src/codegen_c.c:452-480` | Tratamento de UNOP | `INSTR_UNOP` → `dest = op arg;` |
+| `src/codegen_c.c:482-510` | Tratamento de LABEL | `INSTR_LABEL` → `label_L123:` (marcação) |
+| `src/codegen_c.c:512-530` | Tratamento de GOTO | `INSTR_GOTO` → `goto label_L123;` |
+| `src/codegen_c.c:532-560` | Tratamento de IF_FALSE | `INSTR_IF_FALSE` → `if (!cond) goto label_L123;` |
+| `src/codegen_c.c:562-580` | Tratamento de RETURN | `INSTR_RETURN` → `return valor;` |
+
+#### 9.6 Emissão de Headers e Footers
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/codegen_c.c:582-600` | Header do programa | `#include <stdio.h>`, `#include <stdlib.h>` |
+| `src/codegen_c.c:602-620` | Declarações de variáveis | Emite `int var1, var2;` etc. com base em rastreamento |
+| `src/codegen_c.c:622-640` | Função main | `int main() { ... }` |
+| `src/codegen_c.c:642-660` | Footer do programa | `return 0;` e fechamento de chaves |
+
+### ETAPA 10: TRATAMENTO DE ERROS
+
+#### 10.1 Erros Detectados
 | Local | Regra de Funcionamento | Demostração |
 |-------|----------------------------------|----------------------------|
 | `lexer/lexer.l:154-156` | Erro de indentação | `IndentationError: unindent does not match any outer indentation level` |
 | `lexer/lexer.l:200` | Caractere inválido | `printf("Caractere invalido: %s\n", yytext)` |
 | `parser/parser.y:164-166` | Erro de sintaxe | `printf("Erro de sintaxe: %s\n", s)` |
 | `parser/parser.y:149` | Proteção divisão por zero | `$3 != 0 ? $1 / $3 : 0` |
+| `src/gerador.c:27-33` | Erro de alocação (gerador) | `perror("Erro fatal: Falha ao alocar instrucao")` |
+| `src/codegen_c.c:18-21` | Erro ao abrir arquivo C | `perror("Erro ao abrir arquivo para escrita")` |
+
+#### 10.2 Recuperação de Erros
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/gerador.c:42-50` | Validação de alocação | `if (!lista) exit(1)` → Garante lista válida |
+| `src/codegen_c.c:4-37` | Validação de arquivo | `if (!codegen->arquivo) exit(1)` → Garante escrita |
+| `src/main.c:17-25` | Validação de entrada | `if (!yyin) printf("Erro: Nao foi possivel...")` |
+
+### ETAPA 11: PIPELINE DE COMPILAÇÃO COMPLETO (src/main.c)
+
+#### 11.1 Fluxo de Execução Principal
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/main.c:14-18` | Inicialização | `init_compiler()` → Setup lexer, parser, tabela de símbolos |
+| `src/main.c:20-25` | Abertura de arquivo | Se `argc > 1`: `yyin = fopen(argv[1], "r")` |
+| `src/main.c:29` | Análise sintática | `yyparse()` → Executa lexer + parser, constrói AST |
+| `src/main.c:31-45` | Impressão de AST | Se sucesso: `imprimirAST_formatada()` + `imprimirAST()` |
+
+#### 11.2 Geração de Código Intermediário
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/main.c:47-50` | Criação de lista | `criarListaInstrucoes()` → Inicializa estrutura |
+| `src/main.c:51` | Geração intermediária | `gerarCodigoIntermediario(raiz_ast, codigo)` → Traduz AST |
+| `src/main.c:52` | Impressão intermediária | `imprimirCodigoIntermediario(codigo)` → Mostra instruções 3-endereços |
+
+#### 11.3 Geração de Código C
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/main.c:54-69` | Construção de nome de saída | Extrai basename de `argv[1]`, substitui `.py` por `.c` |
+| `src/main.c:70` | Criação do gerador C | `criarCodeGenC(output_file)` → Abre arquivo para escrita |
+| `src/main.c:71` | Geração de código C | `gerarCodigoC(codigo, codegen)` → Converte intermediário para C |
+| `src/main.c:72` | Liberação do gerador | `liberarCodeGenC(codegen)` → Fecha arquivo e libera memória |
+
+#### 11.4 Limpeza de Recursos
+| Local | Regra de Funcionamento | Demostração |
+|-------|----------------------------------|----------------------------|
+| `src/main.c:74` | Liberação de lista intermediária | `liberarListaInstrucoes(codigo)` → Desaloca instruções |
+| `src/main.c:76-80` | Fechamento de arquivo | Se entrada era arquivo: `fclose(yyin)` |
+| `src/main.c:82` | Código de retorno | `return 0` (sucesso) ou `return 1` (erro) |
+
+#### 11.5 Pipeline Integrado: Transformações
+| Estágio | Entrada | Transformação | Saída | Arquivo |
+|---------|---------|---------------|-------|---------|
+| 1 | Arquivo `.py` | Flex tokenização | Token stream | `lexer.l` |
+| 2 | Token stream | Bison parsing | Árvore AST | `parser.y` |
+| 3 | Árvore AST | Verificação semântica | AST tipado | `ast.c` |
+| 4 | AST tipado | Geração intermediária | Instruções 3-end. | `gerador.c` |
+| 5 | Instruções 3-end. | Código C | Arquivo `.c` | `codegen_c.c` |
 
 ## Exemplos de Uso
 

@@ -61,12 +61,13 @@ Este documento fornece instruções completas para configurar o ambiente de dese
 
 ```bash
 # Clone o repositório
-git clone https://github.com/usuario/compilador-grupo09.git
-cd compilador-grupo09
+git clone https://github.com/paulomh/Compiladores---Grupo-09.git
+cd Compiladores---Grupo-09
 
-# Execute o script de instalação
-chmod +x scripts/install-deps.sh
-./scripts/install-deps.sh
+# Instale as dependências (veja seções específicas abaixo)
+# Ubuntu/Debian
+sudo apt update && sudo apt upgrade -y
+sudo apt install -y build-essential flex bison make git valgrind gdb
 ```
 
 ### Instalação Manual
@@ -186,14 +187,12 @@ make --version
 
 ```bash
 # 1. Clone o repositório
-git clone https://github.com/usuario/compilador-grupo09.git
-cd compilador-grupo09
+git clone https://github.com/paulomh/Compiladores---Grupo-09.git
+cd Compiladores---Grupo-09
 
-# 2. Configurar permissões dos scripts
-chmod +x scripts/*.sh
+# 2. Configurar permissões dos scripts de teste
+chmod +x tests/scripts/*.sh
 
-# 3. Instalar dependências (se não fez anteriormente)
-./scripts/install-deps.sh
 ```
 
 ### Estrutura de Diretórios
@@ -243,12 +242,16 @@ flex -o lex.yy.c lexer/lexer.l
 bison -d -v -o parser.tab.c parser/parser.y
 
 # 3. Compilar componentes
-gcc -Wall -Wextra -std=c99 -g -c lex.yy.c -o lex.yy.o
-gcc -Wall -Wextra -std=c99 -g -c parser.tab.c -o parser.tab.o
-gcc -Wall -Wextra -std=c99 -g -c src/main.c -o src/main.o
+gcc -Wall -Wextra -std=gnu99 -g -c lex.yy.c -o lex.yy.o
+gcc -Wall -Wextra -std=gnu99 -g -c parser.tab.c -o parser.tab.o
+gcc -Wall -Wextra -std=gnu99 -g -c src/main.c -o src/main.o
+gcc -Wall -Wextra -std=gnu99 -g -c src/ast.c -o src/ast.o
+gcc -Wall -Wextra -std=gnu99 -g -c src/tabela.c -o src/tabela.o
+gcc -Wall -Wextra -std=gnu99 -g -c src/gerador.c -o src/gerador.o
+gcc -Wall -Wextra -std=gnu99 -g -c src/codegen_c.c -o src/codegen_c.o
 
 # 4. Linkar executável
-gcc -Wall -Wextra -std=c99 -g -o compilador lex.yy.o parser.tab.o src/main.o -lfl
+gcc -Wall -Wextra -std=gnu99 -g -o compilador lex.yy.o parser.tab.o src/main.o src/ast.o src/tabela.o src/gerador.o src/codegen_c.o -lfl
 
 # 5. Testar
 ./compilador tests/files/ast_binop.py
@@ -285,6 +288,7 @@ bash tests/scripts/test_category_error.sh
 bash tests/scripts/test_category_general.sh
 bash tests/scripts/test_category_symbol.sh
 bash tests/scripts/test_category_integration.sh
+bash tests/scripts/test_category_codegen.sh
 
 # Compilar e testar
 make clean && make && bash tests/scripts/test_category_all.sh
@@ -352,11 +356,11 @@ gprof ./bin/compilador gmon.out > profile.txt
 
 ## Verificação da Instalação
 
-### Script de Verificação Completa
+### Verificação Ambiente
 
 ```bash
 #!/bin/bash
-# scripts/verify-install.sh
+# Verificar ferramentas instaladas
 
 echo "=== Verificação do Ambiente de Desenvolvimento ==="
 
@@ -372,9 +376,9 @@ for tool in "${tools[@]}"; do
     echo
 done
 
-# Verificar compilação
+# Testar compilação
 echo "=== Testando Compilação ==="
-if make test-build; then
+if make clean && make; then
     echo "Compilação: SUCESSO"
 else
     echo "Compilação: FALHA"
@@ -386,8 +390,8 @@ echo "=== Verificação Concluída ==="
 ### Executar Verificação
 
 ```bash
-chmod +x scripts/verify-install.sh
-./scripts/verify-install.sh
+# Execute linha por linha ou copie no terminal
+make clean && make
 ```
 
 
@@ -588,8 +592,8 @@ bash tests/scripts/test_category_ast.sh
 │   ├── ast.c
 │   └── tabela.c
 ├── tests/
-│   ├── files/                 # 45 arquivos de teste
-│   └── scripts/               # 7 scripts de teste
+│   ├── files/                 # 48 arquivos de teste
+│   └── scripts/               # 8 scripts de teste
 ├── Makefile
 └── compilador                 # Executável final
 ```
