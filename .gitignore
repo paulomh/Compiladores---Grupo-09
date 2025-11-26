@@ -10,3 +10,5 @@ parser.tab.o
 src/*.o
 src/tabela.o
 src/ast.o
+tests/c/
+tests/bitcode/
