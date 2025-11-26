@@ -142,6 +142,7 @@ static void add_declared(CodeGenC *codegen, const char *name) {
     codegen->declared_vars[codegen->declared_count++] = strdup(name);
 }
 
+// Helpers para controle na conversão de vetores do python para ponteiros em C
 static int is_ptr(CodeGenC *codegen, const char *name) {
     for (int i = 0; i < codegen->ptr_count; i++) {
         if (strcmp(codegen->ptr_vars[i], name) == 0) return 1;
@@ -189,7 +190,7 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
             char result_clean[255];
             limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
             
-            Simbolo *s = buscarSimbolo(instr->arg1); // arg1 é o nome da função
+            Simbolo *s = buscarSimbolo(instr->arg1);
             
             int eh_void = (s && s->info.funcao.tipoRetorno == T_VOID);
 
@@ -215,7 +216,7 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
             limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
             
             if (instr->arg1[0] == '"') {
-                strcpy(arg1_clean, instr->arg1); // Copia com aspas
+                strcpy(arg1_clean, instr->arg1);
             } else if (eh_numero(instr->arg1)) {
                 strcpy(arg1_clean, instr->arg1);
             } else {
@@ -229,7 +230,7 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
             if (!is_declared(codegen, result_clean)) {
                 if (is_string_assign) {
                     fprintf(codegen->arquivo, "char *%s = %s;\n", result_clean, arg1_clean);
-                    add_str(codegen, result_clean); // Marca resultado como string
+                    add_str(codegen, result_clean);
                 } 
                 else if (is_ptr(codegen, arg1_clean)) {
                     fprintf(codegen->arquivo, "int *%s = %s;\n", result_clean, arg1_clean);
@@ -277,6 +278,7 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
                 return;
             }
             
+            // Operadores aritméticos
             switch (instr->op) {
                 case '+': strcpy(op_str, "+"); break;
                 case '-': strcpy(op_str, "-"); break;
@@ -351,6 +353,7 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
         }
 
         case INSTR_ARR_GET: {
+            // Criação de vetor
             char dest[255], arr[255], idx[255];
             limpar_nome_var(dest, instr->resultado, 255);
             limpar_nome_var(arr, instr->arg1, 255);
@@ -368,6 +371,7 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
         }
 
         case INSTR_ARR_SET: {
+            // Atribuição em vetor
             char arr[255], idx[255], val[255];
             limpar_nome_var(arr, instr->resultado, 255);
             
@@ -420,6 +424,7 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
         case INSTR_FUNC_END:
             break;
         case INSTR_PRINT: {
+            // print --> printf
             imprimirIndentC(codegen);
             if (instr->arg1[0] == '\0') {
                 fprintf(codegen->arquivo, "printf(\"\\n\");\n");
@@ -438,6 +443,7 @@ void imprimirInstrucaoC(Instrucao *instr, CodeGenC *codegen) {
             break;
         }
         case INSTR_SCAN: {
+            // input --> scanf
             char result_clean[255];
             limpar_nome_var(result_clean, instr->resultado, sizeof(result_clean));
             imprimirIndentC(codegen);
