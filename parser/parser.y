@@ -297,7 +297,7 @@ expr:
         Simbolo *s = buscarSimbolo($1);
         $$ = novoNoId($1, s ? s->tipo : T_INT);
     }
-  | MINUS expr %prec UMINUS { $$ = novoNoOp('-', novoNoNum(0), $2); }
+  | MINUS expr %prec UMINUS { $$ = novoNoOp('-', $2, NULL); }
   | function_call       { $$ = $1; }
   | LBRACKET argument_list RBRACKET {
     $$ = novoNoOp('{', $2, NULL);
