@@ -83,6 +83,17 @@ else
 fi
 
 echo
+echo "CATEGORIA 7: TESTES DE GERACAO DE CODIGO"
+echo "===================================================="
+if [ -f "tests/scripts/test_category_codegen.sh" ]; then
+    bash tests/scripts/test_category_codegen.sh
+    codegen_result=$?
+else
+    echo "[ERRO] Script de geracao de codigo nao encontrado!"
+    codegen_result=1
+fi
+
+echo
 echo "=========================================="
 echo "RELATORIO FINAL POR CATEGORIA"
 echo "=========================================="
@@ -123,10 +134,16 @@ else
     echo "[FALHA] INTEGRACAO: FALHOU"
 fi
 
+if [ $codegen_result -eq 0 ]; then
+    echo "[OK] GERACAO DE CODIGO: SUCESSO"
+else
+    echo "[FALHA] GERACAO DE CODIGO: FALHOU"
+fi
+
 echo "=========================================="
 
-if [ $ast_result -eq 0 ] && [ $conditional_result -eq 0 ] && [ $error_result -eq 0 ] && [ $general_result -eq 0 ] && [ $symbols_result -eq 0 ] && [ $integration_result -eq 0 ]; then
-    echo "Resultado: Todos os testes passaram com sucesso."
+if [ $ast_result -eq 0 ] && [ $conditional_result -eq 0 ] && [ $error_result -eq 0 ] && [ $general_result -eq 0 ] && [ $symbols_result -eq 0 ] && [ $integration_result -eq 0 ] && [ $codegen_result -eq 0 ]; then
+    echo "Resultado: Todas as 7 categorias de testes passaram com sucesso!"
     exit 0
 else
     echo "Resultado: Alguns testes falharam."
