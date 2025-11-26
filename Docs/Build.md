@@ -64,7 +64,7 @@ make help
 | Target | Descrição | Uso |
 |--------|-----------|-----|
 | `all` | Compila o compilador completo | `make all` |
-| `clean` | Remove todos os arquivos gerados | `make clean` |
+| `clean` | Remove todos os arquivos gerados, incluindo testes | `make clean` |
 | `$(TARGET)` | Compila apenas o executável | `make compilador` |
 
 ### Arquivos Gerados
@@ -77,6 +77,8 @@ make help
 | `parser.output` | Relatório de conflitos do Bison | `bison -v` |
 | `*.o` | Arquivos objeto | `gcc -c` |
 | `compilador` | Executável final | `gcc -o` |
+
+**Nota:** O target `clean` remove todos esses arquivos, incluindo as pastas de testes (`tests/c/` e `tests/bitcode/`).
 
 ## Scripts Disponíveis
 
