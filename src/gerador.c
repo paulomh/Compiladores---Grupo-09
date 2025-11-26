@@ -194,13 +194,15 @@ Instrucao *novaInstrucaoFuncEnd(const char *nome)
     return instr;
 }
 
+// Criar instrução para parâmetros de função
 Instrucao *novaInstrucaoParam(const char *nome)
 {
     Instrucao *instr = alocarInstrucao(INSTR_PARAM);
-    SAFE_STRCPY(instr->arg1, nome); // "param nome"
+    SAFE_STRCPY(instr->arg1, nome);
     return instr;
 }
 
+// Criar instrução print
 Instrucao *novaInstrucaoPrint(const char *var)
 {
     Instrucao *instr = alocarInstrucao(INSTR_PRINT);
@@ -209,6 +211,7 @@ Instrucao *novaInstrucaoPrint(const char *var)
     return instr;
 }
 
+// Criar instrução input
 Instrucao *novaInstrucaoScan(const char *dest)
 {
     Instrucao *instr = alocarInstrucao(INSTR_SCAN);
@@ -216,12 +219,15 @@ Instrucao *novaInstrucaoScan(const char *dest)
     return instr;
 }
 
+// Instrução que inicializa um vetor
 Instrucao *novaInstrucaoArrInit(const char *dest, const char *vals) {
     Instrucao *instr = alocarInstrucao(INSTR_ARR_INIT);
     SAFE_STRCPY(instr->resultado, dest);
     SAFE_STRCPY(instr->arg1, vals);
     return instr;
 }
+
+// Instrução que recebe um vetor
 Instrucao *novaInstrucaoArrGet(const char *dest, const char *array, const char *index) {
     Instrucao *instr = alocarInstrucao(INSTR_ARR_GET);
     SAFE_STRCPY(instr->resultado, dest);
@@ -229,6 +235,8 @@ Instrucao *novaInstrucaoArrGet(const char *dest, const char *array, const char *
     SAFE_STRCPY(instr->arg2, index);
     return instr;
 }
+
+// Instrução que atribui um vetor
 Instrucao *novaInstrucaoArrSet(const char *array, const char *index, const char *val) {
     Instrucao *instr = alocarInstrucao(INSTR_ARR_SET);
     SAFE_STRCPY(instr->resultado, array);
@@ -334,6 +342,7 @@ static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
         return resultado_atual;
     }
 
+    // input/print
     if(no->op == 'C')
     {
         char *nome_func = no->esq->nome;
@@ -382,7 +391,8 @@ static char *gerarCodigoExpr(NoAST *no, ListaInstrucoes *lista)
         Instrucao *instr = alocarInstrucao(INSTR_CALL);
         SAFE_STRCPY(instr->resultado, temp_dest);
         SAFE_STRCPY(instr->arg1, nome_func);
-        SAFE_STRCPY(instr->arg2, args_buffer); 
+        strncpy(instr->arg2, args_buffer, sizeof(instr->arg2) - 1);
+        instr->arg2[sizeof(instr->arg2) - 1] = '\0';
         
         adicionarInstrucao(lista, instr);
         return resultado_atual;
@@ -598,6 +608,7 @@ void gerarCodigoIntermediario(NoAST *raiz, ListaInstrucoes *lista)
         return;
     }
 
+    // While (W)
     if (raiz->op == 'W')
     {
         int label_inicio = novoLabel(lista);

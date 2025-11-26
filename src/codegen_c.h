@@ -10,7 +10,6 @@ typedef struct {
     FILE *arquivo;
     int indent_level;
     int label_counter;
-    // Controle de nomes já declarados para evitar redeclarações
     char **declared_vars;
     int declared_count;
     int declared_size;
